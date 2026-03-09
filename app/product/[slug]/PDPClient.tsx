@@ -24,14 +24,15 @@ export default function PDPClient({ product }: Props) {
   }
 
   return (
-    <div className="grid min-h-screen grid-cols-1 md:grid-cols-[55fr_45fr]">
+    <div className="mx-auto max-w-screen-xl px-4 pt-20 pb-16 md:px-8 md:pt-24">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-[55fr_45fr] md:gap-16">
       {/* Left — Gallery */}
-      <div className="sticky top-0 h-screen overflow-hidden">
+      <div>
         <ProductGallery images={product.images} productName={product.name} />
       </div>
 
       {/* Right — Details */}
-      <div className="flex flex-col justify-center px-8 py-16 md:px-12 md:py-24 lg:px-16">
+      <div className="flex flex-col justify-start py-2">
         {/* Breadcrumb */}
         <p className="mb-6 text-[10px] font-semibold uppercase tracking-[0.3em] text-zinc-400">
           {product.category}
@@ -110,6 +111,7 @@ export default function PDPClient({ product }: Props) {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </div>
   );

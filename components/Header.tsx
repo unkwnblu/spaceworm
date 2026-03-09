@@ -8,7 +8,7 @@ import CartDrawer from "./CartDrawer";
 
 const NAV_LINKS = [
   { label: "New", href: "/#new" },
-  { label: "Tops", href: "/#tops" },
+  { label: "Drops", href: "/drops" },
   { label: "Bottoms", href: "/#bottoms" },
   { label: "Outerwear", href: "/#outerwear" },
 ];
