@@ -7,10 +7,10 @@ import MobileMenu from "./MobileMenu";
 import CartDrawer from "./CartDrawer";
 
 const NAV_LINKS = [
-  { label: "New", href: "/#new" },
+  { label: "All", href: "/all" },
   { label: "Drops", href: "/drops" },
-  { label: "Bottoms", href: "/#bottoms" },
-  { label: "Outerwear", href: "/#outerwear" },
+  { label: "About", href: "/about" },
+  { label: "events", href: "/events" },
 ];
 
 export default function Header() {

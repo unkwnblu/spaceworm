@@ -1,3 +1,5 @@
+export type Gender = "Men" | "Women" | "Unisex";
+
 export type Product = {
   id: string;
   slug: string;
@@ -8,6 +10,7 @@ export type Product = {
   colors: { name: string; hex: string }[];
   description: string;
   category: string;
+  gender: Gender;
   tag?: string;
 };
 
@@ -40,6 +43,7 @@ export const products: Product[] = [
     description:
       "Six-pocket utility cargo constructed from heavyweight ripstop. Dropped waistband, articulated knees, and a relaxed straight leg with zip ankles.",
     category: "Bottoms",
+    gender: "Unisex",
     tag: "New",
   },
   {
@@ -59,6 +63,7 @@ export const products: Product[] = [
     description:
       "230gsm boxy-cut tee with a dropped shoulder and garment-dyed finish. Features a subtle embroidered Spaceworm wordmark at the chest.",
     category: "Tops",
+    gender: "Unisex",
   },
   {
     id: "3",
@@ -77,6 +82,7 @@ export const products: Product[] = [
     description:
       "Silky polyester track jacket with contrast-stitch paneling. Full-zip, rib-knit cuffs and collar, two side pockets, one chest pocket.",
     category: "Outerwear",
+    gender: "Men",
     tag: "Limited",
   },
   {
@@ -96,6 +102,7 @@ export const products: Product[] = [
     description:
       "550gsm heavyweight fleece hoodie with a kangaroo pocket and triple-stitched seams. Relaxed fit with a structured hood and metal drawcord tips.",
     category: "Tops",
+    gender: "Unisex",
   },
   {
     id: "5",
@@ -114,6 +121,7 @@ export const products: Product[] = [
     description:
       "8-inch inseam nylon shorts with a secure zip pocket and mesh liner. Lightweight and fast-drying.",
     category: "Bottoms",
+    gender: "Men",
   },
   {
     id: "6",
@@ -132,6 +140,7 @@ export const products: Product[] = [
     description:
       "Midweight jersey longsleeve with a raw hem finish. Designed to layer or wear alone — the foundation piece.",
     category: "Tops",
+    gender: "Women",
     tag: "New",
   },
   {
@@ -151,6 +160,7 @@ export const products: Product[] = [
     description:
       "6-panel structured cap in heavy canvas. Tonal embroidery, metal buckle strap, and a pre-curved brim.",
     category: "Accessories",
+    gender: "Unisex",
   },
   {
     id: "8",
@@ -168,6 +178,7 @@ export const products: Product[] = [
     description:
       "Quilted puffer in matte ripstop with 700-fill recycled down. Cropped silhouette, stand collar, and concealed zip throughout.",
     category: "Outerwear",
+    gender: "Women",
     tag: "Limited",
   },
 ];
