@@ -18,7 +18,7 @@ export default function Hero() {
       {/* Content */}
       <div className="relative z-10 w-full px-6 pb-16 md:px-12 md:pb-20">
         <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-zinc-300">
-          Spring / Summer 2022
+          Spring / Summer 2025
         </p>
         <h1 className="mb-8 max-w-2xl text-5xl font-black uppercase leading-none tracking-tight text-white md:text-7xl lg:text-8xl">
           No Signal.
@@ -26,7 +26,7 @@ export default function Hero() {
           No Noise.
         </h1>
         <Link
-          href="/#products"
+          href="/all"
           className="inline-block bg-white px-8 py-4 text-xs font-black uppercase tracking-[0.25em] text-black transition-colors hover:bg-zinc-100"
         >
           Shop the Collection

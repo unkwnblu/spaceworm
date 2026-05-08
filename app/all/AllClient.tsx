@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Product, toNGN } from "@/lib/mockData";
 import ProductCard from "@/components/ProductCard";
 
@@ -15,11 +16,52 @@ const SORTS = [
   { label: "New Arrivals", value: "new" },
 ];
 
+function validCategory(v: string | null): string {
+  return v && CATEGORIES.includes(v) ? v : "All";
+}
+function validGender(v: string | null): string {
+  return v && GENDERS.includes(v) ? v : "All";
+}
+function validSort(v: string | null): string {
+  return v && SORTS.some((s) => s.value === v) ? v : "featured";
+}
+
 export default function AllClient({ products }: Props) {
-  const [gender, setGender] = useState("All");
-  const [category, setCategory] = useState("All");
-  const [sort, setSort] = useState("featured");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [gender, setGender] = useState(() => validGender(searchParams.get("gender")));
+  const [category, setCategory] = useState(() => validCategory(searchParams.get("category")));
+  const [sort, setSort] = useState(() => validSort(searchParams.get("sort")));
+  const [priceRange, setPriceRange] = useState("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  function updateURL(next: { gender?: string; category?: string; sort?: string }) {
+    const params = new URLSearchParams();
+    const g = next.gender ?? gender;
+    const c = next.category ?? category;
+    const s = next.sort ?? sort;
+    if (g !== "All") params.set("gender", g);
+    if (c !== "All") params.set("category", c);
+    if (s !== "featured") params.set("sort", s);
+    const qs = params.toString();
+    router.replace(`/all${qs ? `?${qs}` : ""}`, { scroll: false });
+  }
+
+  function handleGender(g: string) {
+    setGender(g);
+    updateURL({ gender: g });
+  }
+
+  function handleCategory(c: string) {
+    setCategory(c);
+    updateURL({ category: c });
+  }
+
+  function handleSort(s: string) {
+    setSort(s);
+    updateURL({ sort: s });
+  }
 
   const filtered = useMemo(() => {
     let result = [...products];
@@ -27,19 +69,26 @@ export default function AllClient({ products }: Props) {
     if (gender !== "All") result = result.filter((p) => p.gender === gender);
     if (category !== "All") result = result.filter((p) => p.category === category);
 
+    // Price filter (NGN = USD * 1500)
+    if (priceRange === "under-100k") result = result.filter((p) => p.price * 1500 < 100_000);
+    else if (priceRange === "100k-200k") result = result.filter((p) => p.price * 1500 >= 100_000 && p.price * 1500 <= 200_000);
+    else if (priceRange === "over-200k") result = result.filter((p) => p.price * 1500 > 200_000);
+
     if (sort === "price-asc") result.sort((a, b) => a.price - b.price);
     else if (sort === "price-desc") result.sort((a, b) => b.price - a.price);
     else if (sort === "new") result = result.filter((p) => p.tag === "New").concat(result.filter((p) => p.tag !== "New"));
 
     return result;
-  }, [products, gender, category, sort]);
+  }, [products, gender, category, sort, priceRange]);
 
-  const activeFilterCount = (gender !== "All" ? 1 : 0) + (category !== "All" ? 1 : 0);
+  const activeFilterCount = (gender !== "All" ? 1 : 0) + (category !== "All" ? 1 : 0) + (priceRange !== "all" ? 1 : 0);
 
   function clearAll() {
     setGender("All");
     setCategory("All");
+    setPriceRange("all");
     setSort("featured");
+    router.replace("/all", { scroll: false });
   }
 
   return (
@@ -68,7 +117,7 @@ export default function AllClient({ products }: Props) {
           <div className="hidden items-center gap-2 md:flex">
             {gender !== "All" && (
               <button
-                onClick={() => setGender("All")}
+                onClick={() => handleGender("All")}
                 className="flex items-center gap-1.5 border border-black px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
               >
                 {gender} <span>×</span>
@@ -76,10 +125,18 @@ export default function AllClient({ products }: Props) {
             )}
             {category !== "All" && (
               <button
-                onClick={() => setCategory("All")}
+                onClick={() => handleCategory("All")}
                 className="flex items-center gap-1.5 border border-black px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
               >
                 {category} <span>×</span>
+              </button>
+            )}
+            {priceRange !== "all" && (
+              <button
+                onClick={() => setPriceRange("all")}
+                className="flex items-center gap-1.5 border border-black px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+              >
+                {priceRange === "under-100k" ? "Under ₦100k" : priceRange === "100k-200k" ? "₦100k–₦200k" : "Over ₦200k"} <span>×</span>
               </button>
             )}
             {activeFilterCount > 0 && (
@@ -97,7 +154,7 @@ export default function AllClient({ products }: Props) {
           </span>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => handleSort(e.target.value)}
             className="border-0 bg-transparent text-[10px] font-black uppercase tracking-widest text-black outline-none cursor-pointer"
           >
             {SORTS.map((s) => (
@@ -121,7 +178,7 @@ export default function AllClient({ products }: Props) {
               {GENDERS.map((g) => (
                 <li key={g}>
                   <button
-                    onClick={() => setGender(g)}
+                    onClick={() => handleGender(g)}
                     className={`text-xs font-semibold uppercase tracking-widest transition-colors ${
                       gender === g ? "text-black" : "text-zinc-400 hover:text-black"
                     }`}
@@ -143,7 +200,7 @@ export default function AllClient({ products }: Props) {
               {CATEGORIES.map((c) => (
                 <li key={c}>
                   <button
-                    onClick={() => setCategory(c)}
+                    onClick={() => handleCategory(c)}
                     className={`text-xs font-semibold uppercase tracking-widest transition-colors ${
                       category === c ? "text-black" : "text-zinc-400 hover:text-black"
                     }`}
@@ -156,23 +213,26 @@ export default function AllClient({ products }: Props) {
             </ul>
           </div>
 
-          {/* Price range label */}
+          {/* Price range */}
           <div>
             <p className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-black">
               Price
             </p>
             <ul className="flex flex-col gap-2">
               {[
-                { label: "Under ₦100k", fn: () => setSort("price-asc") },
-                { label: "₦100k – ₦200k", fn: () => setSort("featured") },
-                { label: "Over ₦200k", fn: () => setSort("price-desc") },
+                { label: "All Prices", value: "all" },
+                { label: "Under ₦100k", value: "under-100k" },
+                { label: "₦100k – ₦200k", value: "100k-200k" },
+                { label: "Over ₦200k", value: "over-200k" },
               ].map((item) => (
-                <li key={item.label}>
+                <li key={item.value}>
                   <button
-                    onClick={item.fn}
-                    className="text-xs font-semibold uppercase tracking-widest text-zinc-400 transition-colors hover:text-black"
+                    onClick={() => setPriceRange(item.value)}
+                    className={`text-xs font-semibold uppercase tracking-widest transition-colors ${
+                      priceRange === item.value ? "text-black" : "text-zinc-400 hover:text-black"
+                    }`}
                   >
-                    <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full border border-zinc-300 align-middle" />
+                    <span className={`mr-2 inline-block h-1.5 w-1.5 rounded-full align-middle ${priceRange === item.value ? "bg-black" : "bg-transparent border border-zinc-300"}`} />
                     {item.label}
                   </button>
                 </li>
@@ -201,7 +261,7 @@ export default function AllClient({ products }: Props) {
                   {GENDERS.map((g) => (
                     <button
                       key={g}
-                      onClick={() => setGender(g)}
+                      onClick={() => handleGender(g)}
                       className={`border px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors ${
                         gender === g ? "border-black bg-black text-white" : "border-zinc-300 text-black hover:border-black"
                       }`}
@@ -216,7 +276,7 @@ export default function AllClient({ products }: Props) {
                   {CATEGORIES.map((c) => (
                     <button
                       key={c}
-                      onClick={() => setCategory(c)}
+                      onClick={() => handleCategory(c)}
                       className={`border px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors ${
                         category === c ? "border-black bg-black text-white" : "border-zinc-300 text-black hover:border-black"
                       }`}

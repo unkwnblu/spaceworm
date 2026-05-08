@@ -170,9 +170,16 @@ export default function CartDrawer() {
               Shipping and taxes calculated at checkout.
             </p>
             {/* TODO: Integrate Paystack checkout */}
-            <button className="w-full bg-black py-4 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800">
-              Checkout
+            <button
+              disabled
+              className="w-full bg-black py-4 text-xs font-black uppercase tracking-[0.25em] text-white opacity-40 cursor-not-allowed"
+              title="Payment integration coming soon"
+            >
+              Checkout — Coming Soon
             </button>
+            <p className="mt-3 text-center text-[10px] text-zinc-400">
+              Paystack integration in progress.
+            </p>
           </div>
         )}
       </div>

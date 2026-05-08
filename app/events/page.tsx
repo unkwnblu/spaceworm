@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import Link from "next/link";
-import { drops } from "@/lib/mockData";
-import ProductCard from "@/components/ProductCard";
-import NotifyForm from "@/components/NotifyForm";
+import { events } from "@/lib/mockData";
 
 export const metadata: Metadata = {
-  title: "Drops — Spaceworm",
-  description: "Limited releases and new arrivals. When they're gone, they're gone.",
+  title: "Events — Spaceworm",
+  description:
+    "Pop-up shops, trunk shows, and in-person experiences. See Spaceworm in the real world.",
 };
 
 const STATUS_CONFIG = {
-  upcoming: { label: "Upcoming", dot: "bg-zinc-300" },
-  live:     { label: "Live Now", dot: "bg-black animate-pulse" },
-  "sold-out": { label: "Sold Out", dot: "bg-zinc-200" },
+  upcoming: { label: "Upcoming", dot: "bg-black animate-pulse" },
+  past: { label: "Past", dot: "bg-zinc-200" },
 };
 
 function formatDate(iso: string) {
@@ -25,109 +22,101 @@ function formatDate(iso: string) {
   });
 }
 
-export default function DropsPage() {
+function formatRange(start: string, end?: string) {
+  if (!end) return formatDate(start);
+  const s = new Date(start);
+  const e = new Date(end);
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return `${s.getDate()}–${e.getDate()} ${s.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}`;
+  }
+  return `${formatDate(start)} – ${formatDate(end)}`;
+}
+
+export default function EventsPage() {
   return (
     <>
       <Header />
 
       <main className="pt-14">
-        {/* — Page header — */}
+        {/* Page header */}
         <section className="border-b border-zinc-100 px-4 py-16 md:px-8 md:py-24">
           <div className="mx-auto max-w-screen-xl">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.4em] text-zinc-400">
-                  Limited Releases
+                  In Person
                 </p>
                 <h1 className="text-5xl font-black uppercase leading-none tracking-tight text-black md:text-6xl">
-                  Drops
+                  Events
                 </h1>
               </div>
               <p className="max-w-sm text-sm leading-relaxed text-zinc-500">
-                Every drop is a finite run. No restocks. No second chances.
-                Sign up for SMS to be first in line.
+                Pop-ups, trunk shows, and one-night-only experiences.
+                Follow us for announcements — most events are first-come, first-served.
               </p>
             </div>
           </div>
         </section>
 
-        {/* — Drops list — */}
+        {/* Events list */}
         <div className="mx-auto max-w-screen-xl px-4 md:px-8">
-          {drops.map((drop) => {
-            const status = STATUS_CONFIG[drop.status];
-            const isSoldOut = drop.status === "sold-out";
+          {events.map((event) => {
+            const status = STATUS_CONFIG[event.status];
+            const isPast = event.status === "past";
 
             return (
               <section
-                key={drop.id}
-                className={`border-b border-zinc-100 py-16 md:py-20 ${isSoldOut ? "opacity-40" : ""}`}
+                key={event.id}
+                className={`border-b border-zinc-100 py-16 md:py-20 ${isPast ? "opacity-40" : ""}`}
               >
-                {/* Drop header row */}
-                <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-[1fr_2fr]">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_2fr]">
                   {/* Left — meta */}
                   <div>
                     <p className="mb-2 text-[10px] font-black uppercase tracking-[0.35em] text-zinc-400">
-                      Drop {drop.number}
+                      {event.location}
                     </p>
                     <p className="mb-4 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
-                      {formatDate(drop.date)}
+                      {formatRange(event.date, event.endDate)}
                     </p>
-                    {/* Status pill */}
-                    <div className="flex items-center gap-2">
+                    <div className="mb-4 flex items-center gap-2">
                       <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
                       <span className="text-[10px] font-black uppercase tracking-widest text-black">
                         {status.label}
                       </span>
                     </div>
+                    <p className="text-xs text-zinc-400">{event.venue}</p>
                   </div>
 
                   {/* Right — title + description */}
                   <div>
                     <h2 className="mb-4 text-3xl font-black uppercase leading-none tracking-tight text-black md:text-4xl">
-                      {drop.title}
+                      {event.title}
                     </h2>
-                    <p className="mb-6 max-w-lg text-sm leading-relaxed text-zinc-500">
-                      {drop.description}
+                    <p className="max-w-lg text-sm leading-relaxed text-zinc-500">
+                      {event.description}
                     </p>
-
-                    {drop.status === "upcoming" && <NotifyForm />}
-
-                    {drop.status === "sold-out" && (
-                      <p className="text-xs font-black uppercase tracking-widest text-zinc-400">
-                        This drop has ended.
-                      </p>
-                    )}
                   </div>
                 </div>
-
-                {/* Product grid */}
-                {drop.products.length > 0 && (
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
-                    {drop.products.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
-                )}
               </section>
             );
           })}
         </div>
 
-        {/* — Archive note — */}
+        {/* Bottom CTA */}
         <section className="px-4 py-16 md:px-8">
           <div className="mx-auto max-w-screen-xl">
             <div className="flex flex-col items-start gap-6 border-t border-zinc-100 pt-12 md:flex-row md:items-center md:justify-between">
               <p className="text-xs leading-relaxed text-zinc-400">
-                All drops are limited-run and non-restockable.
+                Want to host a Spaceworm pop-up?
                 <br />
-                Miss one — wait for the next.
+                Get in touch — hello@spaceworm.co
               </p>
-              <Link
-                href="/"
+              <a
+                href="mailto:hello@spaceworm.co"
                 className="inline-block bg-black px-8 py-4 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800"
               >
-                Shop All
-              </Link>
+                Contact Us
+              </a>
             </div>
           </div>
         </section>

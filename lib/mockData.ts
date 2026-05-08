@@ -196,3 +196,153 @@ export function getRelatedProducts(slug: string, limit = 4): Product[] {
     .concat(products.filter((p) => p.slug !== slug && p.category !== current.category))
     .slice(0, limit);
 }
+
+// ─── Drops ───────────────────────────────────────────────────────────────────
+
+export type DropStatus = "upcoming" | "live" | "sold-out";
+
+export type Drop = {
+  id: string;
+  number: string;
+  title: string;
+  date: string; // ISO date string
+  status: DropStatus;
+  description: string;
+  products: Product[];
+};
+
+export const drops: Drop[] = [
+  {
+    id: "drop-003",
+    number: "003",
+    title: "No Signal",
+    date: "2026-06-14",
+    status: "upcoming",
+    description:
+      "A six-piece capsule built around the concept of disconnection. Heavyweight ripstop, matte hardware, zero logos. Drops 14 June, 10:00 WAT.",
+    products: products.filter((p) => ["void-cargo-pant", "orbit-track-jacket"].includes(p.slug)),
+  },
+  {
+    id: "drop-002",
+    number: "002",
+    title: "Hollow",
+    date: "2026-04-01",
+    status: "live",
+    description:
+      "Eight pieces. All black. All limited. Built for the space between streetwear and technical wear. Available now while stock lasts.",
+    products: products.filter((p) =>
+      ["signal-hoodie", "wormhole-oversized-tee", "deep-field-puffer", "sector-seven-cap"].includes(p.slug)
+    ),
+  },
+  {
+    id: "drop-001",
+    number: "001",
+    title: "Void",
+    date: "2026-01-15",
+    status: "sold-out",
+    description: "The first drop. Four pieces. Sold out in 38 minutes. Thank you.",
+    products: [],
+  },
+];
+
+export function getDropById(id: string): Drop | undefined {
+  return drops.find((d) => d.id === id);
+}
+
+// ─── Events ──────────────────────────────────────────────────────────────────
+
+export type EventStatus = "upcoming" | "past";
+
+export type SpacewormEvent = {
+  id: string;
+  title: string;
+  date: string; // ISO date string
+  endDate?: string;
+  location: string;
+  venue: string;
+  status: EventStatus;
+  description: string;
+};
+
+export const events: SpacewormEvent[] = [
+  {
+    id: "evt-003",
+    title: "No Signal — Pop-Up",
+    date: "2026-06-14",
+    endDate: "2026-06-15",
+    location: "Lagos",
+    venue: "Alára, Victoria Island",
+    status: "upcoming",
+    description:
+      "Two days only. Shop the full No Signal capsule before it goes online. DJ sets, free alterations, first 50 customers receive an exclusive tote.",
+  },
+  {
+    id: "evt-002",
+    title: "Spaceworm × The Trunk Show",
+    date: "2026-04-26",
+    endDate: "2026-04-27",
+    location: "Abuja",
+    venue: "Jabi Lake Mall, Ground Floor",
+    status: "upcoming",
+    description:
+      "A two-day trunk show featuring the full Hollow collection alongside archive pieces. Sizing consultations on-site. Walk-ins welcome.",
+  },
+  {
+    id: "evt-001",
+    title: "Void — Launch Night",
+    date: "2026-01-15",
+    location: "Lagos",
+    venue: "Bogobiri House, Ikoyi",
+    status: "past",
+    description:
+      "The inaugural Spaceworm event. 200 guests, four pieces, sold out in-person before the online drop. Thank you to everyone who pulled up.",
+  },
+];
+
+export function getEventById(id: string): SpacewormEvent | undefined {
+  return events.find((e) => e.id === id);
+}
+
+// ─── Orders ──────────────────────────────────────────────────────────────────
+
+export type OrderStatus = "pending" | "fulfilled" | "cancelled";
+
+export type Order = {
+  id: string;
+  number: string;
+  customer: string;
+  date: string; // ISO date string
+  items: number;
+  total: number; // USD
+  status: OrderStatus;
+};
+
+export const orders: Order[] = [
+  {
+    id: "ord-003",
+    number: "003",
+    customer: "Adaeze O.",
+    date: "2026-04-12",
+    items: 2,
+    total: 210,
+    status: "pending",
+  },
+  {
+    id: "ord-002",
+    number: "002",
+    customer: "Emeka N.",
+    date: "2026-04-08",
+    items: 1,
+    total: 145,
+    status: "fulfilled",
+  },
+  {
+    id: "ord-001",
+    number: "001",
+    customer: "Tunde B.",
+    date: "2026-04-01",
+    items: 3,
+    total: 395,
+    status: "fulfilled",
+  },
+];

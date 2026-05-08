@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -84,7 +85,7 @@ export default function AboutPage() {
                 "The product is the statement. Everything else is just noise."
               </p>
               <footer className="mt-8 text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-500">
-                — Spaceworm, Lagos 2023
+                — Spaceworm, Lagos 2025
               </footer>
             </blockquote>
           </div>
@@ -156,7 +157,7 @@ export default function AboutPage() {
               </h2>
               <div className="flex gap-4">
                 <Link
-                  href="/"
+                  href="/all"
                   className="inline-block bg-black px-8 py-4 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800"
                 >
                   Shop Now
@@ -172,19 +173,7 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* — Footer — */}
-        <footer className="border-t border-zinc-200 bg-white">
-          <div className="mx-auto max-w-screen-xl px-4 py-10 md:px-8">
-            <div className="flex flex-col items-center justify-between gap-4 text-[10px] uppercase tracking-widest text-zinc-400 md:flex-row">
-              <p>© {new Date().getFullYear()} Spaceworm. All rights reserved.</p>
-              <div className="flex gap-6">
-                <Link href="/" className="hover:text-black">Shop</Link>
-                <a href="#" className="hover:text-black">Privacy</a>
-                <a href="#" className="hover:text-black">Terms</a>
-              </div>
-            </div>
-          </div>
-        </footer>
+        <Footer variant="compact" />
       </main>
     </>
   );

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import { products } from "@/lib/mockData";
@@ -27,7 +28,9 @@ export default function AllPage() {
           </div>
         </div>
 
-        <AllClient products={products} />
+        <Suspense>
+          <AllClient products={products} />
+        </Suspense>
       </main>
     </>
   );
