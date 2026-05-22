@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import type { Drop, DropStatus } from "@/lib/mockData";
-import { products } from "@/lib/mockData";
+import { useRouter } from "next/navigation";
+import type { DBDrop, DBProduct } from "@/lib/database.types";
 import AdminFormField from "@/components/admin/AdminFormField";
 import AdminSaveToast from "@/components/admin/AdminSaveToast";
 import { useUnsavedChanges } from "@/lib/useUnsavedChanges";
 
 type Props = {
-  initialData?: Drop;
+  initialData?: DBDrop;
+  initialProductIds?: string[];
+  allProducts: DBProduct[];
   mode?: "create" | "edit";
   dangerZone?: React.ReactNode;
 };
@@ -18,28 +20,30 @@ const inputClass =
 const selectClass =
   "w-full border border-zinc-300 bg-white px-3 py-2.5 text-sm text-black outline-none focus:border-black transition-colors";
 
-export default function DropForm({ initialData, mode = "edit", dangerZone }: Props) {
+export default function DropForm({
+  initialData,
+  initialProductIds = [],
+  allProducts,
+  mode = "edit",
+  dangerZone,
+}: Props) {
+  const router = useRouter();
+
   const [number, setNumber] = useState(initialData?.number ?? "");
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [date, setDate] = useState(initialData?.date ?? "");
-  const [status, setStatus] = useState<DropStatus>(
-    initialData?.status ?? "upcoming"
-  );
-  const [description, setDescription] = useState(
-    initialData?.description ?? ""
-  );
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>(
-    initialData?.products.map((p) => p.id) ?? []
-  );
+  const [status, setStatus] = useState(initialData?.status ?? "upcoming");
+  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>(initialProductIds);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [isDirty, setIsDirty] = useState(false);
 
   useUnsavedChanges(isDirty);
 
-  function markDirty() {
-    setIsDirty(true);
-  }
+  function markDirty() { setIsDirty(true); }
 
   function toggleProduct(productId: string) {
     setSelectedProductIds((prev) =>
@@ -58,17 +62,53 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
     return errs;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+
     setErrors({});
-    setSaved(true);
-    setIsDirty(false);
-    setTimeout(() => setSaved(false), 2500);
+    setSaving(true);
+    setSaveError("");
+
+    const payload = {
+      number: number.trim(),
+      title: title.trim(),
+      date,
+      status,
+      description: description.trim() || null,
+      productIds: selectedProductIds,
+    };
+
+    try {
+      const url = mode === "create"
+        ? "/api/admin/drops"
+        : `/api/admin/drops/${initialData!.id}`;
+      const method = mode === "create" ? "POST" : "PATCH";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) { setSaveError(data.error ?? "Save failed."); return; }
+
+      setIsDirty(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+
+      if (mode === "create") {
+        router.push(`/admin/drops/${data.id}`);
+      } else {
+        router.refresh();
+      }
+    } catch {
+      setSaveError("Network error. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleDiscard() {
@@ -77,7 +117,7 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
     setDate(initialData?.date ?? "");
     setStatus(initialData?.status ?? "upcoming");
     setDescription(initialData?.description ?? "");
-    setSelectedProductIds(initialData?.products.map((p) => p.id) ?? []);
+    setSelectedProductIds(initialProductIds);
     setErrors({});
     setIsDirty(false);
   }
@@ -92,18 +132,11 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
             </h2>
             <div className="flex flex-col gap-5">
               <div className="grid grid-cols-2 gap-4">
-                <AdminFormField
-                  label="Drop Number"
-                  hint="e.g. 003"
-                  error={errors.number}
-                >
+                <AdminFormField label="Drop Number" hint="e.g. 003" error={errors.number}>
                   <input
                     className={inputClass}
                     value={number}
-                    onChange={(e) => {
-                      setNumber(e.target.value);
-                      markDirty();
-                    }}
+                    onChange={(e) => { setNumber(e.target.value); markDirty(); }}
                   />
                 </AdminFormField>
 
@@ -111,10 +144,7 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
                   <select
                     className={selectClass}
                     value={status}
-                    onChange={(e) => {
-                      setStatus(e.target.value as DropStatus);
-                      markDirty();
-                    }}
+                    onChange={(e) => { setStatus(e.target.value); markDirty(); }}
                   >
                     <option value="upcoming">Upcoming</option>
                     <option value="live">Live</option>
@@ -127,10 +157,7 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
                 <input
                   className={inputClass}
                   value={title}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                    markDirty();
-                  }}
+                  onChange={(e) => { setTitle(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
 
@@ -139,10 +166,7 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
                   type="date"
                   className={inputClass}
                   value={date}
-                  onChange={(e) => {
-                    setDate(e.target.value);
-                    markDirty();
-                  }}
+                  onChange={(e) => { setDate(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
 
@@ -151,10 +175,7 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
                   className={`${inputClass} resize-none`}
                   rows={4}
                   value={description}
-                  onChange={(e) => {
-                    setDescription(e.target.value);
-                    markDirty();
-                  }}
+                  onChange={(e) => { setDescription(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
             </div>
@@ -167,11 +188,8 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
             Products in Drop
           </h2>
           <div className="flex flex-col gap-3">
-            {products.map((p) => (
-              <label
-                key={p.id}
-                className="flex cursor-pointer items-center gap-3 py-1"
-              >
+            {allProducts.map((p) => (
+              <label key={p.id} className="flex cursor-pointer items-center gap-3 py-1">
                 <input
                   type="checkbox"
                   checked={selectedProductIds.includes(p.id)}
@@ -186,13 +204,16 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
             ))}
           </div>
           <p className="mt-4 text-[10px] text-zinc-400">
-            {selectedProductIds.length} of {products.length} selected
+            {selectedProductIds.length} of {allProducts.length} selected
           </p>
         </div>
       </div>
 
-      {/* Danger zone slot */}
       {dangerZone && <div className="mt-10">{dangerZone}</div>}
+
+      {saveError && (
+        <p className="mt-4 text-[10px] font-semibold text-red-500">{saveError}</p>
+      )}
 
       {/* Sticky save bar */}
       <div className="sticky bottom-0 -mx-6 mt-8 border-t border-zinc-200 bg-white px-6 py-4 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
@@ -200,11 +221,12 @@ export default function DropForm({ initialData, mode = "edit", dangerZone }: Pro
           <button
             type="submit"
             form="drop-form"
-            className="bg-black px-8 py-3.5 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800"
+            disabled={saving}
+            className="bg-black px-8 py-3.5 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800 disabled:bg-zinc-400"
           >
-            {mode === "create" ? "Create Drop" : "Save Changes"}
+            {saving ? "Saving…" : mode === "create" ? "Create Drop" : "Save Changes"}
           </button>
-          {isDirty && (
+          {isDirty && !saving && (
             <>
               <button
                 type="button"

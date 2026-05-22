@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import type { Product, Gender } from "@/lib/mockData";
+import type { DBProduct, ProductColor } from "@/lib/database.types";
 import AdminFormField from "@/components/admin/AdminFormField";
 import AdminSaveToast from "@/components/admin/AdminSaveToast";
 import { useUnsavedChanges } from "@/lib/useUnsavedChanges";
 
 type Props = {
-  initialData?: Product;
+  initialData?: DBProduct;
   mode?: "create" | "edit";
   dangerZone?: React.ReactNode;
 };
@@ -19,27 +20,30 @@ const selectClass =
   "w-full border border-zinc-300 bg-white px-3 py-2.5 text-sm text-black outline-none focus:border-black transition-colors";
 
 export default function ProductForm({ initialData, mode = "edit", dangerZone }: Props) {
+  const router = useRouter();
+
   const [name, setName] = useState(initialData?.name ?? "");
   const [category, setCategory] = useState(initialData?.category ?? "Tops");
-  const [gender, setGender] = useState<Gender>(initialData?.gender ?? "Unisex");
+  const [gender, setGender] = useState(initialData?.gender ?? "Unisex");
+  // DB stores price in NGN directly — no × 1500
   const [price, setPrice] = useState(
-    initialData?.price != null ? String(initialData.price * 1500) : ""
+    initialData?.price != null ? String(initialData.price) : ""
   );
   const [sizes, setSizes] = useState(initialData?.sizes.join(", ") ?? "");
   const [tag, setTag] = useState(initialData?.tag ?? "");
   const [description, setDescription] = useState(initialData?.description ?? "");
-  const [colors, setColors] = useState<{ name: string; hex: string }[]>(
-    initialData?.colors ?? []
+  const [colors, setColors] = useState<ProductColor[]>(
+    (initialData?.colors as ProductColor[]) ?? []
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [isDirty, setIsDirty] = useState(false);
 
   useUnsavedChanges(isDirty);
 
-  function markDirty() {
-    setIsDirty(true);
-  }
+  function markDirty() { setIsDirty(true); }
 
   function validate() {
     const errs: Record<string, string> = {};
@@ -51,28 +55,66 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
     return errs;
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      return;
-    }
+    if (Object.keys(errs).length > 0) { setErrors(errs); return; }
+
     setErrors({});
-    setSaved(true);
-    setIsDirty(false);
-    setTimeout(() => setSaved(false), 2500);
+    setSaving(true);
+    setSaveError("");
+
+    const payload = {
+      name: name.trim(),
+      price: Math.round(parseFloat(price)),
+      category,
+      gender,
+      sizes: sizes.split(",").map((s) => s.trim()).filter(Boolean),
+      colors,
+      description: description.trim() || null,
+      tag: tag || null,
+    };
+
+    try {
+      const url = mode === "create"
+        ? "/api/admin/products"
+        : `/api/admin/products/${initialData!.id}`;
+      const method = mode === "create" ? "POST" : "PATCH";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) { setSaveError(data.error ?? "Save failed."); return; }
+
+      setIsDirty(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+
+      if (mode === "create") {
+        router.push(`/admin/products/${data.id}`);
+      } else {
+        router.refresh();
+      }
+    } catch {
+      setSaveError("Network error. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleDiscard() {
     setName(initialData?.name ?? "");
     setCategory(initialData?.category ?? "Tops");
     setGender(initialData?.gender ?? "Unisex");
-    setPrice(initialData?.price != null ? String(initialData.price * 1500) : "");
+    setPrice(initialData?.price != null ? String(initialData.price) : "");
     setSizes(initialData?.sizes.join(", ") ?? "");
     setTag(initialData?.tag ?? "");
     setDescription(initialData?.description ?? "");
-    setColors(initialData?.colors ?? []);
+    setColors((initialData?.colors as ProductColor[]) ?? []);
     setErrors({});
     setIsDirty(false);
   }
@@ -108,18 +150,12 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                 <input
                   className={inputClass}
                   value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    markDirty();
-                  }}
+                  onChange={(e) => { setName(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
 
               {mode === "edit" && initialData && (
-                <AdminFormField
-                  label="Slug"
-                  hint="URL path — updates automatically when connected to backend"
-                >
+                <AdminFormField label="Slug" hint="Auto-generated from name on create">
                   <input
                     className={`${inputClass} bg-zinc-50 text-zinc-400`}
                     value={initialData.slug}
@@ -133,10 +169,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                   <select
                     className={selectClass}
                     value={category}
-                    onChange={(e) => {
-                      setCategory(e.target.value);
-                      markDirty();
-                    }}
+                    onChange={(e) => { setCategory(e.target.value); markDirty(); }}
                   >
                     {["Tops", "Bottoms", "Outerwear", "Accessories"].map((c) => (
                       <option key={c}>{c}</option>
@@ -148,10 +181,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                   <select
                     className={selectClass}
                     value={gender}
-                    onChange={(e) => {
-                      setGender(e.target.value as Gender);
-                      markDirty();
-                    }}
+                    onChange={(e) => { setGender(e.target.value); markDirty(); }}
                   >
                     {["Men", "Women", "Unisex"].map((g) => (
                       <option key={g}>{g}</option>
@@ -166,10 +196,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                     type="number"
                     className={inputClass}
                     value={price}
-                    onChange={(e) => {
-                      setPrice(e.target.value);
-                      markDirty();
-                    }}
+                    onChange={(e) => { setPrice(e.target.value); markDirty(); }}
                     min={0}
                   />
                 </AdminFormField>
@@ -178,10 +205,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                   <select
                     className={selectClass}
                     value={tag}
-                    onChange={(e) => {
-                      setTag(e.target.value);
-                      markDirty();
-                    }}
+                    onChange={(e) => { setTag(e.target.value); markDirty(); }}
                   >
                     <option value="">None</option>
                     <option value="New">New</option>
@@ -190,18 +214,11 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                 </AdminFormField>
               </div>
 
-              <AdminFormField
-                label="Sizes"
-                hint="Comma-separated, e.g. XS, S, M, L, XL"
-                error={errors.sizes}
-              >
+              <AdminFormField label="Sizes" hint="Comma-separated, e.g. XS, S, M, L, XL" error={errors.sizes}>
                 <input
                   className={inputClass}
                   value={sizes}
-                  onChange={(e) => {
-                    setSizes(e.target.value);
-                    markDirty();
-                  }}
+                  onChange={(e) => { setSizes(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
 
@@ -210,10 +227,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                   className={`${inputClass} resize-none`}
                   rows={4}
                   value={description}
-                  onChange={(e) => {
-                    setDescription(e.target.value);
-                    markDirty();
-                  }}
+                  onChange={(e) => { setDescription(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
             </div>
@@ -224,9 +238,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
         <div className="flex flex-col gap-6">
           {/* Colors */}
           <div className="border border-zinc-200 bg-white p-6">
-            <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
-              Colors
-            </h2>
+            <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Colors</h2>
             <div className="flex flex-col gap-3">
               {colors.map((c, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -263,21 +275,13 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
 
           {/* Images */}
           <div className="border border-zinc-200 bg-white p-6">
-            <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
-              Images
-            </h2>
+            <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Images</h2>
             {initialData?.images && initialData.images.length > 0 ? (
               <div className="flex flex-col gap-3">
                 {initialData.images.map((url, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="relative h-16 w-14 flex-shrink-0 overflow-hidden border border-zinc-200 bg-zinc-50">
-                      <Image
-                        src={url}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="56px"
-                      />
+                      <Image src={url} alt="" fill className="object-cover" sizes="56px" />
                     </div>
                     <p className="truncate text-[10px] text-zinc-400">{url}</p>
                   </div>
@@ -286,15 +290,16 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
             ) : (
               <p className="text-[10px] text-zinc-400">No images yet.</p>
             )}
-            <p className="mt-4 text-[10px] text-zinc-400">
-              Image upload available when backend is connected.
-            </p>
+            <p className="mt-4 text-[10px] text-zinc-400">Image upload coming soon.</p>
           </div>
         </div>
       </div>
 
-      {/* Danger zone slot */}
       {dangerZone && <div className="mt-10">{dangerZone}</div>}
+
+      {saveError && (
+        <p className="mt-4 text-[10px] font-semibold text-red-500">{saveError}</p>
+      )}
 
       {/* Sticky save bar */}
       <div className="sticky bottom-0 -mx-6 mt-8 border-t border-zinc-200 bg-white px-6 py-4 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
@@ -302,11 +307,12 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
           <button
             type="submit"
             form="product-form"
-            className="bg-black px-8 py-3.5 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800"
+            disabled={saving}
+            className="bg-black px-8 py-3.5 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800 disabled:bg-zinc-400"
           >
-            {mode === "create" ? "Create Product" : "Save Changes"}
+            {saving ? "Saving…" : mode === "create" ? "Create Product" : "Save Changes"}
           </button>
-          {isDirty && (
+          {isDirty && !saving && (
             <>
               <button
                 type="button"

@@ -57,6 +57,7 @@ export type Database = {
           tag?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       drops: {
         Row: {
@@ -88,6 +89,7 @@ export type Database = {
           description?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       drop_products: {
         Row: {
@@ -102,10 +104,27 @@ export type Database = {
           drop_id?: string;
           product_id?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "drop_products_drop_id_fkey";
+            columns: ["drop_id"];
+            isOneToOne: false;
+            referencedRelation: "drops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "drop_products_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       events: {
         Row: {
           id: string;
+          slug: string | null;
           title: string;
           date: string;
           end_date: string | null;
@@ -113,11 +132,15 @@ export type Database = {
           venue: string;
           status: string;
           description: string | null;
+          details: string | null;
+          image_url: string | null;
+          ticket_url: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
+          slug?: string | null;
           title: string;
           date: string;
           end_date?: string | null;
@@ -125,11 +148,15 @@ export type Database = {
           venue: string;
           status: string;
           description?: string | null;
+          details?: string | null;
+          image_url?: string | null;
+          ticket_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
+          slug?: string | null;
           title?: string;
           date?: string;
           end_date?: string | null;
@@ -137,8 +164,12 @@ export type Database = {
           venue?: string;
           status?: string;
           description?: string | null;
+          details?: string | null;
+          image_url?: string | null;
+          ticket_url?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       orders: {
         Row: {
@@ -146,8 +177,11 @@ export type Database = {
           number: string;
           customer_name: string | null;
           customer_email: string;
+          customer_phone: string | null;
+          shipping_address: Json | null;  // {address, city, state, country}
+          shipping_fee: number;           // NGN, whole naira
           status: string;
-          total: number;                  // NGN, whole naira
+          total: number;                  // NGN, whole naira (items + shipping)
           paystack_reference: string | null;
           created_at: string;
           updated_at: string;
@@ -157,6 +191,9 @@ export type Database = {
           number: string;
           customer_name?: string | null;
           customer_email: string;
+          customer_phone?: string | null;
+          shipping_address?: Json | null;
+          shipping_fee?: number;
           status?: string;
           total: number;
           paystack_reference?: string | null;
@@ -168,11 +205,15 @@ export type Database = {
           number?: string;
           customer_name?: string | null;
           customer_email?: string;
+          customer_phone?: string | null;
+          shipping_address?: Json | null;
+          shipping_fee?: number;
           status?: string;
           total?: number;
           paystack_reference?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       order_items: {
         Row: {
@@ -210,6 +251,22 @@ export type Database = {
           quantity?: number;
           unit_price?: number;
         };
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       waitlist: {
         Row: {
@@ -229,9 +286,13 @@ export type Database = {
           email?: string;
           drop_id?: string | null;
         };
+        Relationships: [];
       };
     };
-    Enums: Record<string, never>;
+    Views: {};
+    Functions: {};
+    Enums: {};
+    CompositeTypes: {};
   };
 };
 

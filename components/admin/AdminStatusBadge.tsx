@@ -1,4 +1,4 @@
-type Status = "upcoming" | "live" | "sold-out" | "past" | "pending" | "fulfilled" | "cancelled";
+export type Status = "upcoming" | "live" | "sold-out" | "past" | "pending" | "fulfilled" | "cancelled";
 
 const CONFIG: Record<Status, { label: string; className: string; pulse?: boolean }> = {
   upcoming:   { label: "Upcoming",  className: "bg-zinc-100 text-zinc-600" },

@@ -1,10 +1,15 @@
-"use client";
-
 import Link from "next/link";
+import { createServiceClient } from "@/lib/supabase/server";
 import AdminHeader from "@/components/admin/AdminHeader";
 import DropForm from "@/components/admin/DropForm";
 
-export default function NewDropPage() {
+export default async function NewDropPage() {
+  const supabase = await createServiceClient();
+  const { data: allProducts } = await supabase
+    .from("products")
+    .select("*")
+    .order("name");
+
   return (
     <>
       <AdminHeader title="New Drop" breadcrumb="Drops" />
@@ -17,7 +22,7 @@ export default function NewDropPage() {
             ← Back to Drops
           </Link>
         </div>
-        <DropForm mode="create" />
+        <DropForm mode="create" allProducts={allProducts ?? []} />
       </main>
     </>
   );

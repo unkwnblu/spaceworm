@@ -167,19 +167,16 @@ export default function CartDrawer() {
               <span className="text-sm font-black">{toNGN(totalPrice)}</span>
             </div>
             <p className="mb-4 text-[10px] text-zinc-400">
-              Shipping and taxes calculated at checkout.
+              Shipping calculated at checkout.
             </p>
-            {/* TODO: Integrate Paystack checkout */}
-            <button
-              disabled
-              className="w-full bg-black py-4 text-xs font-black uppercase tracking-[0.25em] text-white opacity-40 cursor-not-allowed"
-              title="Payment integration coming soon"
+
+            <Link
+              href="/checkout"
+              onClick={closeCart}
+              className="block w-full bg-black py-4 text-center text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800"
             >
-              Checkout — Coming Soon
-            </button>
-            <p className="mt-3 text-center text-[10px] text-zinc-400">
-              Paystack integration in progress.
-            </p>
+              Checkout
+            </Link>
           </div>
         )}
       </div>

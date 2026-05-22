@@ -1,26 +1,25 @@
-"use client";
-
-import { useState } from "react";
-import { notFound, useParams, useRouter } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { products } from "@/lib/mockData";
+import { createServiceClient } from "@/lib/supabase/server";
 import AdminHeader from "@/components/admin/AdminHeader";
-import AdminSaveToast from "@/components/admin/AdminSaveToast";
 import ProductForm from "@/components/admin/ProductForm";
+import DeleteButton from "@/components/admin/DeleteButton";
 
-export default function EditProductPage() {
-  const { id } = useParams<{ id: string }>();
-  const router = useRouter();
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleted, setDeleted] = useState(false);
+export default async function EditProductPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createServiceClient();
 
-  const product = products.find((p) => p.id === id);
-  if (!product) return notFound();
+  const { data: product } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  function handleDelete() {
-    setDeleted(true);
-    setTimeout(() => router.push("/admin/products"), 1500);
-  }
+  if (!product) notFound();
 
   return (
     <>
@@ -42,38 +41,15 @@ export default function EditProductPage() {
               <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-red-400">
                 Danger Zone
               </h2>
-              {confirmDelete ? (
-                <div className="flex items-center gap-4">
-                  <p className="text-xs text-zinc-500">
-                    Are you sure? This cannot be undone.
-                  </p>
-                  <button
-                    onClick={handleDelete}
-                    className="bg-red-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white transition-colors hover:bg-red-700"
-                  >
-                    Confirm Delete
-                  </button>
-                  <button
-                    onClick={() => setConfirmDelete(false)}
-                    className="px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-colors hover:text-black"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setConfirmDelete(true)}
-                  className="border border-red-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-red-400 transition-colors hover:border-red-400 hover:text-red-600"
-                >
-                  Delete Product
-                </button>
-              )}
+              <DeleteButton
+                url={`/api/admin/products/${id}`}
+                redirectTo="/admin/products"
+                label="Delete Product"
+              />
             </div>
           }
         />
       </main>
-
-      <AdminSaveToast visible={deleted} message="Deleted (mock)" />
     </>
   );
 }
