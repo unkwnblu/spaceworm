@@ -4,6 +4,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import AdminHeader from "@/components/admin/AdminHeader";
 import OrderDetailClient from "@/components/admin/OrderDetailClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function OrderDetailPage({
   params,
 }: {

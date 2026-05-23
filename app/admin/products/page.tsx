@@ -2,6 +2,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ProductsClient from "@/components/admin/ProductsClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductsPage() {
   const supabase = await createServiceClient();
   const { data: products } = await supabase

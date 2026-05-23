@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { DBEvent } from "@/lib/database.types";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Events",
   description:

@@ -5,6 +5,8 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import EventForm from "@/components/admin/EventForm";
 import DeleteButton from "@/components/admin/DeleteButton";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditEventPage({
   params,
 }: {

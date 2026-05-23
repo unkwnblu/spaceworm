@@ -5,6 +5,8 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import ProductForm from "@/components/admin/ProductForm";
 import DeleteButton from "@/components/admin/DeleteButton";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditProductPage({
   params,
 }: {

@@ -3,6 +3,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import AdminHeader from "@/components/admin/AdminHeader";
 import DropForm from "@/components/admin/DropForm";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewDropPage() {
   const supabase = await createServiceClient();
   const { data: allProducts } = await supabase

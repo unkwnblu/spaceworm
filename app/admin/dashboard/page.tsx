@@ -3,6 +3,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatusBadge, { type Status } from "@/components/admin/AdminStatusBadge";
 
+export const dynamic = "force-dynamic";
+
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", minimumFractionDigits: 0 }).format(n);
 
