@@ -55,7 +55,7 @@ export default function CheckoutPage() {
   const isNigeria = form.country.trim().toLowerCase() === "nigeria";
   const isInternational = form.country.trim() !== "" && !isNigeria;
 
-  const itemsTotalNGN = totalPrice * 1500;
+  const itemsTotalNGN = totalPrice;
   const shipping = useMemo(() => getShipping(form.state, form.country), [form.state, form.country]);
   const grandTotalNGN = itemsTotalNGN + (shipping?.rateNGN ?? 0);
 
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
       size: item.size,
       color: item.color,
       quantity: item.quantity,
-      unitPriceNGN: item.product.price * 1500,
+      unitPriceNGN: item.product.price,
     }));
 
     setLoading(true);
