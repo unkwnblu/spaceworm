@@ -3,10 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { createServiceClient } from "@/lib/supabase/server";
+import type { CheckoutItem, CustomerInfo } from "@/app/api/checkout/route";
 
 export const metadata: Metadata = {
   title: "Order Confirmed",
 };
+
+export const dynamic = "force-dynamic";
 
 function formatNGN(naira: number) {
   return new Intl.NumberFormat("en-NG", {
@@ -29,6 +33,97 @@ async function verifyPayment(reference: string) {
   return res.json();
 }
 
+/**
+ * Fallback order creation — if the webhook hasn't created the order yet,
+ * create it here from the verified Paystack transaction data.
+ */
+async function ensureOrderExists(result: {
+  data: {
+    reference: string;
+    amount: number;
+    customer: { email: string; first_name?: string; last_name?: string };
+    metadata?: {
+      customerInfo?: CustomerInfo;
+      shippingNGN?: number;
+      items?: CheckoutItem[];
+      deliveryMethod?: string;
+    };
+  };
+}) {
+  try {
+    const supabase = await createServiceClient();
+    const { reference, amount, customer, metadata } = result.data;
+    const shippingFee = metadata?.shippingNGN ?? 0;
+
+    // Check if order already exists (webhook may have created it)
+    const { data: existing } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("paystack_reference", reference)
+      .maybeSingle();
+
+    if (existing) return; // Webhook already handled it
+
+    // Generate order number
+    const { count } = await supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true });
+
+    const orderNumber = `SW-${String((count ?? 0) + 1).padStart(3, "0")}`;
+
+    // Build order data
+    const info = metadata?.customerInfo;
+
+    const customerName = info
+      ? `${info.firstName} ${info.lastName}`.trim()
+      : [customer.first_name, customer.last_name].filter(Boolean).join(" ") || null;
+
+    const shippingAddress = info
+      ? { address: info.address, city: info.city, state: info.state, country: info.country }
+      : null;
+
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        number: orderNumber,
+        customer_email: info?.email ?? customer.email,
+        customer_name: customerName,
+        customer_phone: info?.phone ?? null,
+        shipping_address: shippingAddress,
+        shipping_fee: shippingFee,
+        status: "pending",
+        total: Math.round(amount / 100),
+        paystack_reference: reference,
+      })
+      .select()
+      .single();
+
+    if (orderError) throw orderError;
+
+    // Insert order items
+    const items = metadata?.items ?? [];
+    if (items.length > 0) {
+      const { error: itemsError } = await supabase.from("order_items").insert(
+        items.map((item) => ({
+          order_id: order.id,
+          product_id: item.productId ?? null,
+          product_name: item.name,
+          product_image: item.image ?? null,
+          size: item.size,
+          color: item.color ?? null,
+          quantity: item.quantity,
+          unit_price: item.unitPriceNGN,
+        }))
+      );
+      if (itemsError) throw itemsError;
+    }
+
+    console.log(`[callback] Order ${orderNumber} created for ${customer.email}`);
+  } catch (err) {
+    console.error("[callback] Error creating order:", err);
+  }
+}
+
 export default async function OrderCallbackPage({
   searchParams,
 }: {
@@ -42,6 +137,11 @@ export default async function OrderCallbackPage({
   const result = await verifyPayment(reference);
   const success =
     result.status === true && result.data?.status === "success";
+
+  // If payment verified, ensure order exists (fallback if webhook missed)
+  if (success) {
+    await ensureOrderExists(result);
+  }
 
   const amountNGN: number = result.data?.amount
     ? Math.round(result.data.amount / 100)
