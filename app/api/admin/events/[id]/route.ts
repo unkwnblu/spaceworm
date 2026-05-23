@@ -26,6 +26,7 @@ export async function PATCH(
       description: body.description || null,
       details: body.details || null,
       image_url: body.image_url || null,
+      gallery: body.gallery ?? [],
       ticket_url: body.ticket_url || null,
     })
     .eq("id", id)

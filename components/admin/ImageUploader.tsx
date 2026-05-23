@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { uploadFile } from "@/lib/upload";
 
 type Props = {
   value: string;
   onChange: (url: string) => void;
-  bucket?: "event-images" | "product-images";
+  bucket?: "event-images" | "product-images" | "drop-images";
   aspect?: string; // e.g. "16/9", "4/5", "1/1"
 };
 
@@ -24,18 +25,10 @@ export default function ImageUploader({
     setError("");
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("bucket", bucket);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Upload failed");
-        return;
-      }
-      onChange(data.url);
-    } catch {
-      setError("Network error during upload");
+      const result = await uploadFile(file, bucket);
+      onChange(result.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -120,7 +113,7 @@ export default function ImageUploader({
                 Click or drag to upload
               </p>
               <p className="mt-1 text-[9px] font-semibold uppercase tracking-widest text-zinc-400">
-                JPG · PNG · WebP · max 8 MB
+                JPG · PNG · WebP · max 20 MB
               </p>
             </>
           )}

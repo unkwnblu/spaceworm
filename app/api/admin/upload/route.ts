@@ -2,45 +2,47 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/admin-auth";
 
-const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]);
-const MAX_BYTES = 8 * 1024 * 1024;
-const ALLOWED_BUCKETS = new Set(["event-images", "product-images"]);
+const ALLOWED_BUCKETS = new Set(["event-images", "product-images", "drop-images"]);
 
+/**
+ * POST /api/admin/upload
+ * Body: { bucket: string, filename: string, contentType: string }
+ *
+ * Returns a signed upload URL so the browser can upload directly to Supabase
+ * Storage — bypasses Vercel's 4.5 MB body limit on the free plan.
+ */
 export async function POST(request: Request) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
 
-  const formData = await request.formData();
-  const file = formData.get("file");
-  const bucket = (formData.get("bucket") as string) || "event-images";
+  const { bucket, filename, contentType } = await request.json();
 
-  if (!ALLOWED_BUCKETS.has(bucket)) {
+  if (!bucket || !ALLOWED_BUCKETS.has(bucket)) {
     return NextResponse.json({ error: "Invalid bucket" }, { status: 400 });
   }
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "No file provided" }, { status: 400 });
-  }
-  if (!ALLOWED.has(file.type)) {
-    return NextResponse.json({ error: `Unsupported file type: ${file.type}` }, { status: 400 });
-  }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "File too large (max 8MB)" }, { status: 400 });
+  if (!filename || !contentType) {
+    return NextResponse.json({ error: "Missing filename or contentType" }, { status: 400 });
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const ext = filename.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
   const supabase = await createServiceClient();
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    contentType: file.type,
-    cacheControl: "31536000",
-    upsert: false,
-  });
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  const { data: signedData, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUploadUrl(path);
+
+  if (error || !signedData) {
+    return NextResponse.json({ error: error?.message ?? "Failed to create upload URL" }, { status: 500 });
   }
 
   const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(path);
-  return NextResponse.json({ url: publicData.publicUrl, path });
+
+  return NextResponse.json({
+    signedUrl: signedData.signedUrl,
+    token: signedData.token,
+    path,
+    publicUrl: publicData.publicUrl,
+  });
 }

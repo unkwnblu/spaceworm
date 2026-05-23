@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       date: fields.date,
       status: fields.status,
       description: fields.description || null,
+      image_url: fields.image_url || null,
     })
     .select()
     .single();

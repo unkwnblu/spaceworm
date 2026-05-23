@@ -241,6 +241,32 @@ export default async function EventDetailPage({
           </div>
         </section>
 
+        {/* ─── GALLERY ──────────────────────────────────────── */}
+        {e.gallery && e.gallery.length > 0 && (
+          <section className="border-b border-zinc-100 px-4 py-16 md:px-8 md:py-20">
+            <div className="mx-auto max-w-screen-xl">
+              <div className="mb-8 flex items-end justify-between">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
+                  Gallery · {e.gallery.length} {e.gallery.length === 1 ? "Photo" : "Photos"}
+                </h3>
+              </div>
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+                {e.gallery.map((url, i) => (
+                  <div key={i} className="relative aspect-square overflow-hidden bg-zinc-100">
+                    <Image
+                      src={url}
+                      alt={`${e.title} — photo ${i + 1}`}
+                      fill
+                      className="object-cover transition-transform duration-500 hover:scale-105"
+                      sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* ─── RELATED EVENTS ───────────────────────────────── */}
         {others.length > 0 && (
           <section className="px-4 py-16 md:px-8">

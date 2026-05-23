@@ -52,10 +52,10 @@ export default function HomePage() {
               {/* Editorial image */}
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-zinc-100">
                 <Image
-                  src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&q=80"
+                  src="/new-img.jpg"
                   alt="Spaceworm editorial"
                   fill
-                  className="object-cover grayscale"
+                  className="object-cover"
                   sizes="(min-width: 768px) 50vw, 100vw"
                 />
               </div>

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import type { DBDrop, DBProduct } from "@/lib/database.types";
 import AdminFormField from "@/components/admin/AdminFormField";
 import AdminSaveToast from "@/components/admin/AdminSaveToast";
 import { useUnsavedChanges } from "@/lib/useUnsavedChanges";
+import { uploadFile } from "@/lib/upload";
 
 type Props = {
   initialData?: DBDrop;
@@ -34,7 +36,10 @@ export default function DropForm({
   const [date, setDate] = useState(initialData?.date ?? "");
   const [status, setStatus] = useState(initialData?.status ?? "upcoming");
   const [description, setDescription] = useState(initialData?.description ?? "");
+  const [imageUrl, setImageUrl] = useState(initialData?.image_url ?? "");
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>(initialProductIds);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -77,6 +82,7 @@ export default function DropForm({
       date,
       status,
       description: description.trim() || null,
+      image_url: imageUrl || null,
       productIds: selectedProductIds,
     };
 
@@ -117,6 +123,7 @@ export default function DropForm({
     setDate(initialData?.date ?? "");
     setStatus(initialData?.status ?? "upcoming");
     setDescription(initialData?.description ?? "");
+    setImageUrl(initialData?.image_url ?? "");
     setSelectedProductIds(initialProductIds);
     setErrors({});
     setIsDirty(false);
@@ -182,8 +189,70 @@ export default function DropForm({
           </div>
         </form>
 
-        {/* Products checklist */}
-        <div className="border border-zinc-200 bg-white p-6">
+        {/* Sidebar */}
+        <div className="flex flex-col gap-6">
+          {/* Drop Image */}
+          <div className="border border-zinc-200 bg-white p-6">
+            <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
+              Drop Image
+            </h2>
+            {imageUrl ? (
+              <div className="group relative">
+                <div className="relative aspect-[3/4] w-full overflow-hidden border border-zinc-200 bg-zinc-50">
+                  <Image src={imageUrl} alt="" fill className="object-cover" sizes="300px" />
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploading}
+                    className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 hover:text-black"
+                  >
+                    Replace
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setImageUrl(""); markDirty(); }}
+                    className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 hover:text-red-500"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full border border-dashed border-zinc-300 py-8 text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-colors hover:border-black hover:text-black disabled:opacity-50"
+              >
+                {uploading ? "Uploading…" : "+ Upload Image"}
+              </button>
+            )}
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploading(true);
+                try {
+                  const result = await uploadFile(file, "drop-images");
+                  setImageUrl(result.url);
+                  markDirty();
+                } catch {
+                  // skip failed upload
+                }
+                setUploading(false);
+                e.target.value = "";
+              }}
+            />
+          </div>
+
+          {/* Products checklist */}
+          <div className="border border-zinc-200 bg-white p-6">
           <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
             Products in Drop
           </h2>
@@ -206,6 +275,7 @@ export default function DropForm({
           <p className="mt-4 text-[10px] text-zinc-400">
             {selectedProductIds.length} of {allProducts.length} selected
           </p>
+        </div>
         </div>
       </div>
 

@@ -7,6 +7,7 @@ import type { DBProduct, ProductColor } from "@/lib/database.types";
 import AdminFormField from "@/components/admin/AdminFormField";
 import AdminSaveToast from "@/components/admin/AdminSaveToast";
 import { useUnsavedChanges } from "@/lib/useUnsavedChanges";
+import { uploadFile } from "@/lib/upload";
 
 type Props = {
   initialData?: DBProduct;
@@ -38,6 +39,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
   const [images, setImages] = useState<string[]>(initialData?.images ?? []);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -343,34 +345,58 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
               ref={imageInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+              multiple
               className="hidden"
               onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
+                const files = Array.from(e.target.files ?? []);
+                if (files.length === 0) return;
                 setUploading(true);
-                try {
-                  const fd = new FormData();
-                  fd.append("file", file);
-                  fd.append("bucket", "product-images");
-                  const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-                  const data = await res.json();
-                  if (res.ok) {
-                    setImages((prev) => [...prev, data.url]);
+                setUploadProgress({ done: 0, total: files.length });
+
+                for (let i = 0; i < files.length; i++) {
+                  try {
+                    const result = await uploadFile(files[i], "product-images");
+                    setImages((prev) => [...prev, result.url]);
                     markDirty();
+                  } catch {
+                    // skip failed uploads
                   }
-                } finally {
-                  setUploading(false);
-                  e.target.value = "";
+                  setUploadProgress({ done: i + 1, total: files.length });
                 }
+
+                setUploading(false);
+                setUploadProgress({ done: 0, total: 0 });
+                e.target.value = "";
               }}
             />
+
+            {/* Upload progress bar */}
+            {uploading && uploadProgress.total > 0 && (
+              <div className="mt-3">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+                    Uploading {uploadProgress.done}/{uploadProgress.total}
+                  </span>
+                  <span className="text-[10px] font-bold text-black">
+                    {Math.round((uploadProgress.done / uploadProgress.total) * 100)}%
+                  </span>
+                </div>
+                <div className="h-1 w-full overflow-hidden bg-zinc-200">
+                  <div
+                    className="h-full bg-black transition-all duration-300"
+                    style={{ width: `${(uploadProgress.done / uploadProgress.total) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={() => imageInputRef.current?.click()}
               disabled={uploading}
               className="mt-3 w-full border border-dashed border-zinc-300 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-colors hover:border-black hover:text-black disabled:opacity-50"
             >
-              {uploading ? "Uploading…" : "+ Add Image"}
+              {uploading ? "Uploading…" : "+ Add Images"}
             </button>
           </div>
         </div>
