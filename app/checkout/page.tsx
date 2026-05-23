@@ -19,7 +19,9 @@ const NIGERIAN_STATES = [
   "Taraba","Yobe","Zamfara",
 ];
 
-function validate(form: CustomerInfo) {
+type DeliveryMethod = "delivery" | "pickup";
+
+function validate(form: CustomerInfo, method: DeliveryMethod) {
   const errors: Partial<Record<keyof CustomerInfo, string>> = {};
   const isNigeria = form.country.trim().toLowerCase() === "nigeria";
   if (!form.firstName.trim())  errors.firstName = "Required";
@@ -27,9 +29,11 @@ function validate(form: CustomerInfo) {
   if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
     errors.email = "Enter a valid email";
   if (!form.phone.trim())      errors.phone   = "Required";
-  if (!form.address.trim())    errors.address = "Required";
-  if (!form.city.trim())       errors.city    = "Required";
-  if (isNigeria && !form.state.trim()) errors.state = "Required";
+  if (method === "delivery") {
+    if (!form.address.trim())    errors.address = "Required";
+    if (!form.city.trim())       errors.city    = "Required";
+    if (isNigeria && !form.state.trim()) errors.state = "Required";
+  }
   return errors;
 }
 
@@ -44,6 +48,7 @@ export default function CheckoutPage() {
     firstName: "", lastName: "", email: "", phone: "",
     address: "", city: "", state: "", country: "Nigeria",
   });
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("delivery");
   const [errors, setErrors] = useState<Partial<Record<keyof CustomerInfo, string>>>({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
@@ -52,11 +57,12 @@ export default function CheckoutPage() {
     if (items.length === 0) router.replace("/all");
   }, [items, router]);
 
+  const isPickup = deliveryMethod === "pickup";
   const isNigeria = form.country.trim().toLowerCase() === "nigeria";
   const isInternational = form.country.trim() !== "" && !isNigeria;
 
   const itemsTotalNGN = totalPrice;
-  const shipping = useMemo(() => getShipping(form.state, form.country), [form.state, form.country]);
+  const shipping = useMemo(() => isPickup ? { rateNGN: 0, tierName: "Pickup", eta: "Collect in store" } : getShipping(form.state, form.country), [form.state, form.country, isPickup]);
   const grandTotalNGN = itemsTotalNGN + (shipping?.rateNGN ?? 0);
 
   function set(field: keyof CustomerInfo, value: string) {
@@ -68,10 +74,10 @@ export default function CheckoutPage() {
     e.preventDefault();
     setServerError("");
 
-    const errs = validate(form);
+    const errs = validate(form, deliveryMethod);
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
-    if (!shipping) {
+    if (!isPickup && !shipping) {
       setErrors((prev) => ({ ...prev, state: "Select a valid state to calculate shipping" }));
       return;
     }
@@ -92,10 +98,11 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerInfo: form,
+          customerInfo: isPickup ? { ...form, address: "Pickup", city: "Pickup", state: "" } : form,
           items: checkoutItems,
           itemsTotalNGN,
-          shippingNGN: shipping.rateNGN,
+          shippingNGN: isPickup ? 0 : (shipping?.rateNGN ?? 0),
+          deliveryMethod,
         }),
       });
 
@@ -176,7 +183,48 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Delivery */}
+              {/* Delivery Method */}
+              <p className={sectionLabel}>Delivery Method</p>
+              <div className="mb-8 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryMethod("delivery")}
+                  className={`border px-4 py-3.5 text-left transition-colors ${
+                    deliveryMethod === "delivery"
+                      ? "border-black bg-black text-white"
+                      : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                  }`}
+                >
+                  <span className="block text-xs font-black uppercase tracking-[0.2em]">Delivery</span>
+                  <span className="mt-1 block text-[10px] opacity-70">Ship to your address</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryMethod("pickup")}
+                  className={`border px-4 py-3.5 text-left transition-colors ${
+                    deliveryMethod === "pickup"
+                      ? "border-black bg-black text-white"
+                      : "border-zinc-200 text-zinc-600 hover:border-zinc-400"
+                  }`}
+                >
+                  <span className="block text-xs font-black uppercase tracking-[0.2em]">Pickup</span>
+                  <span className="mt-1 block text-[10px] opacity-70">Collect in store — free</span>
+                </button>
+              </div>
+
+              {isPickup && (
+                <div className="mb-10 border border-zinc-100 bg-zinc-50 p-5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Pickup Location</p>
+                  <p className="mt-2 text-sm font-semibold text-black">Lagos, Nigeria</p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    You will receive pickup details via email after placing your order.
+                  </p>
+                </div>
+              )}
+
+              {/* Delivery Address */}
+              {!isPickup && (
+              <>
               <p className={sectionLabel}>Delivery Address</p>
               <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
@@ -216,25 +264,25 @@ export default function CheckoutPage() {
                     className={inputClass("country")} autoComplete="country-name" />
                 </div>
               </div>
+              </>
+              )}
 
               {serverError && (
                 <p className="mb-4 text-[10px] font-semibold text-red-500">{serverError}</p>
               )}
-              <button type="submit" disabled={loading || !shipping}
+              <button type="submit" disabled={loading || (!isPickup && !shipping)}
                 className="w-full bg-black py-4 text-xs font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-400 sm:w-auto sm:px-16">
                 {loading ? "Processing…" : "Continue to Payment"}
               </button>
-              {!shipping && isNigeria && (
+              {!isPickup && !shipping && isNigeria && (
                 <p className="mt-2 text-[10px] text-zinc-400">Select your state to calculate shipping and enable checkout.</p>
               )}
-              {!shipping && !isNigeria && !form.country.trim() && (
+              {!isPickup && !shipping && !isNigeria && !form.country.trim() && (
                 <p className="mt-2 text-[10px] text-zinc-400">Enter your country to calculate shipping.</p>
               )}
-              {shipping && (
-                <p className="mt-3 text-[10px] text-zinc-400">
-                  You will be redirected to Paystack to complete your payment securely.
-                </p>
-              )}
+              <p className="mt-3 text-[10px] text-zinc-400">
+                You will be redirected to Paystack to complete your payment securely.
+              </p>
             </form>
 
             {/* ── Order Summary ─────────────────────────────────────────────── */}
@@ -273,21 +321,23 @@ export default function CheckoutPage() {
 
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-zinc-500">
-                    Shipping
+                    {isPickup ? "Shipping" : "Shipping"}
                     {shipping && (
                       <span className="ml-1.5 text-[10px] text-zinc-400">
                         ({shipping.tierName} · {shipping.eta})
                       </span>
                     )}
                   </span>
-                  {shipping ? (
+                  {isPickup ? (
+                    <span className="font-semibold text-zinc-400">Free</span>
+                  ) : shipping ? (
                     <span className="font-semibold">{fmt(shipping.rateNGN)}</span>
                   ) : (
                     <span className="text-[10px] text-zinc-400">Select state</span>
                   )}
                 </div>
 
-                {shipping && (
+                {(isPickup || shipping) && (
                   <div className="flex items-center justify-between border-t border-zinc-200 pt-3">
                     <span className="text-xs font-black uppercase tracking-widest">Total</span>
                     <span className="text-base font-black">{fmt(grandTotalNGN)}</span>
