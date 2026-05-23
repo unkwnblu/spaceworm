@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About — Spaceworm",
+  title: "About",
   description:
     "Spaceworm exists in the gap between streetwear and technical wear. Built for those who move without noise.",
 };

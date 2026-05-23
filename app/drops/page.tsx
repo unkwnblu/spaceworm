@@ -7,7 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import NotifyForm from "@/components/NotifyForm";
 
 export const metadata: Metadata = {
-  title: "Drops — Spaceworm",
+  title: "Drops",
   description: "Limited releases and new arrivals. When they're gone, they're gone.",
 };
 

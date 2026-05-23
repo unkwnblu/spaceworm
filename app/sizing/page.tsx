@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Sizing Guide — Spaceworm",
+  title: "Sizing Guide",
   description: "Spaceworm size chart. Find your fit across all garment categories.",
 };
 

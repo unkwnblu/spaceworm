@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import MobileMenu from "./MobileMenu";
@@ -39,11 +40,19 @@ export default function Header() {
       >
         <div className="mx-auto flex h-14 max-w-screen-xl items-center justify-between px-4 md:px-8">
           {/* Logo */}
-          <Link
-            href="/"
-            className={`text-sm font-black uppercase tracking-[0.2em] transition-colors ${dark ? "text-black" : "text-white"}`}
-          >
-            Spaceworm
+          <Link href="/" className="flex items-center gap-2.5">
+            <Image
+              src="/sw-logo.png"
+              alt="Spaceworm"
+              width={28}
+              height={28}
+              className={`transition-all ${dark ? "invert" : ""}`}
+            />
+            <span
+              className={`text-sm font-black uppercase tracking-[0.2em] transition-colors ${dark ? "text-black" : "text-white"}`}
+            >
+              Spaceworm
+            </span>
           </Link>
 
           {/* Desktop Nav */}

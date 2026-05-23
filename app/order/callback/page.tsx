@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Order Confirmed — Spaceworm",
+  title: "Order Confirmed",
 };
 
 function formatNGN(naira: number) {

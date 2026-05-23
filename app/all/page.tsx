@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import AllClient from "./AllClient";
 
 export const metadata: Metadata = {
-  title: "All Products — Spaceworm",
+  title: "All Products",
   description: "The full Spaceworm catalogue. Filter by gender, category, and price.",
 };
 

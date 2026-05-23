@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions — Spaceworm",
+  title: "Terms & Conditions",
 };
 
 export default function TermsPage() {

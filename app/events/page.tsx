@@ -7,7 +7,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import type { DBEvent } from "@/lib/database.types";
 
 export const metadata: Metadata = {
-  title: "Events — Spaceworm",
+  title: "Events",
   description:
     "Pop-up shops, trunk shows, and in-person experiences. See Spaceworm in the real world.",
 };
