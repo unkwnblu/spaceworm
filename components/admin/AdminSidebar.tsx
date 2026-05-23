@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   {
@@ -55,6 +56,17 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    label: "Users",
+    href: "/admin/users",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
 ];
 
 type Props = {
@@ -64,6 +76,14 @@ type Props = {
 
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/admin/login");
+    router.refresh();
+  }
 
   return (
     <>
@@ -99,7 +119,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         })}
       </nav>
 
-      {/* View Site */}
+      {/* View Site + Sign Out */}
       <div className="border-t border-zinc-800 px-2 py-4">
         <Link
           href="/"
@@ -113,6 +133,16 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           </svg>
           View Site
         </Link>
+        <button
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-3 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-zinc-500 transition-colors hover:text-red-400"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          Sign Out
+        </button>
       </div>
     </>
   );

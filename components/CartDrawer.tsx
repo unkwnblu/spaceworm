@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { toNGN } from "@/lib/mockData";
+import { formatNGN } from "@/lib/database.types";
 
 export default function CartDrawer() {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice } =
@@ -138,7 +138,7 @@ export default function CartDrawer() {
 
                       <div className="text-right">
                         <p className="text-xs font-bold">
-                          {toNGN(item.product.price * item.quantity)}
+                          {formatNGN(item.product.price * item.quantity)}
                         </p>
                         <button
                           onClick={() =>
@@ -164,7 +164,7 @@ export default function CartDrawer() {
               <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500">
                 Subtotal
               </span>
-              <span className="text-sm font-black">{toNGN(totalPrice)}</span>
+              <span className="text-sm font-black">{formatNGN(totalPrice)}</span>
             </div>
             <p className="mb-4 text-[10px] text-zinc-400">
               Shipping calculated at checkout.

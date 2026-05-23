@@ -2,10 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Product, toNGN } from "@/lib/mockData";
+import type { DBProduct } from "@/lib/database.types";
 import ProductCard from "@/components/ProductCard";
 
-type Props = { products: Product[] };
+type Props = { products: DBProduct[] };
 
 const CATEGORIES = ["All", "Tops", "Bottoms", "Outerwear", "Accessories"];
 const GENDERS = ["All", "Men", "Women", "Unisex"];
@@ -69,10 +69,9 @@ export default function AllClient({ products }: Props) {
     if (gender !== "All") result = result.filter((p) => p.gender === gender);
     if (category !== "All") result = result.filter((p) => p.category === category);
 
-    // Price filter (NGN = USD * 1500)
-    if (priceRange === "under-100k") result = result.filter((p) => p.price * 1500 < 100_000);
-    else if (priceRange === "100k-200k") result = result.filter((p) => p.price * 1500 >= 100_000 && p.price * 1500 <= 200_000);
-    else if (priceRange === "over-200k") result = result.filter((p) => p.price * 1500 > 200_000);
+    if (priceRange === "under-100k") result = result.filter((p) => p.price < 100_000);
+    else if (priceRange === "100k-200k") result = result.filter((p) => p.price >= 100_000 && p.price <= 200_000);
+    else if (priceRange === "over-200k") result = result.filter((p) => p.price > 200_000);
 
     if (sort === "price-asc") result.sort((a, b) => a.price - b.price);
     else if (sort === "price-desc") result.sort((a, b) => b.price - a.price);

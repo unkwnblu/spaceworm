@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Product, toNGN } from "@/lib/mockData";
+import type { DBProduct } from "@/lib/database.types";
+import { formatNGN } from "@/lib/database.types";
 
 type Props = {
-  product: Product;
+  product: DBProduct;
 };
 
 export default function ProductCard({ product }: Props) {
@@ -48,7 +49,7 @@ export default function ProductCard({ product }: Props) {
             {product.name}
           </h3>
         </div>
-        <p className="shrink-0 text-sm font-black text-black">{toNGN(product.price)}</p>
+        <p className="shrink-0 text-sm font-black text-black">{formatNGN(product.price)}</p>
       </div>
     </Link>
   );

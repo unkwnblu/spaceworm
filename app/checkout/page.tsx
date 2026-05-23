@@ -7,7 +7,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
-import { toNGN } from "@/lib/mockData";
+import { formatNGN } from "@/lib/database.types";
 import { getShipping } from "@/lib/shipping";
 import type { CheckoutItem, CustomerInfo } from "@/app/api/checkout/route";
 
@@ -257,7 +257,7 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] text-zinc-400">Qty {item.quantity}</span>
-                        <span className="text-xs font-bold">{toNGN(item.product.price * item.quantity)}</span>
+                        <span className="text-xs font-bold">{formatNGN(item.product.price * item.quantity)}</span>
                       </div>
                     </div>
                   </li>

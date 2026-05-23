@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin-auth";
+import type { Database } from "@/lib/database.types";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const { id } = await params;
   const supabase = await createServiceClient();
   const body = await request.json();
 
-  const update: Record<string, unknown> = {};
+  const update: Database["public"]["Tables"]["orders"]["Update"] = {};
   if (body.status !== undefined) update.status = body.status;
   if (body.shipping_fee !== undefined) update.shipping_fee = Math.round(Number(body.shipping_fee));
   if (body.customer_name !== undefined) update.customer_name = body.customer_name || null;

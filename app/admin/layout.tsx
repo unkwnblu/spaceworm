@@ -1,11 +1,17 @@
 "use client";
 
 import { useState, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import { AdminLayoutContext } from "@/context/AdminLayoutContext";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
 
   return (
     <AdminLayoutContext.Provider

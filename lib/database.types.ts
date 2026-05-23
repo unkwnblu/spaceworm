@@ -268,6 +268,26 @@ export type Database = {
           },
         ];
       };
+      admin_users: {
+        Row: {
+          id: string;
+          email: string;
+          name: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          name?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          name?: string | null;
+        };
+        Relationships: [];
+      };
       waitlist: {
         Row: {
           id: string;
@@ -314,7 +334,16 @@ export type DBDrop       = Tables<"drops">;
 export type DBEvent      = Tables<"events">;
 export type DBOrder      = Tables<"orders">;
 export type DBOrderItem  = Tables<"order_items">;
+export type DBAdminUser  = Tables<"admin_users">;
 export type DBWaitlist   = Tables<"waitlist">;
 
 // Color item shape stored inside products.colors (JSONB)
 export type ProductColor = { name: string; hex: string };
+
+export function formatNGN(ngn: number): string {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+  }).format(ngn);
+}

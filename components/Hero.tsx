@@ -11,22 +11,25 @@ type Slide = {
   cta: { label: string; href: string };
 };
 
-// TODO: drop additional hero images into /public and reference them here
+// Swap placeholder paths for real brand imagery:
+//   /hero-collection.jpg  — lifestyle / lookbook shot (collection CTA)
+//   /hero-drop.jpg        — product-focused / editorial (drop CTA)
+//   /hero-event.jpg       — pop-up / event atmosphere (event CTA)
 const SLIDES: Slide[] = [
   {
-    image: "/hero-bg.jpg",
+    image: "/hero-collection.jpg",
     eyebrow: "Spring / Summer 2026",
     title: (<>No Signal.<br />No Noise.</>),
     cta: { label: "Shop the Collection", href: "/all" },
   },
   {
-    image: "/hero-bg.jpg",
+    image: "/hero-drop.jpg",
     eyebrow: "Drop 002 — Hollow",
     title: (<>Built for<br />the Quiet Ones.</>),
     cta: { label: "View the Drop", href: "/drops" },
   },
   {
-    image: "/hero-bg.jpg",
+    image: "/hero-event.jpg",
     eyebrow: "Events",
     title: (<>No Signal<br />Pop-Up · Lagos.</>),
     cta: { label: "RSVP", href: "/events" },

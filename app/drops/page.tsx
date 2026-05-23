@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { drops } from "@/lib/mockData";
+import { createClient } from "@/lib/supabase/server";
 import ProductCard from "@/components/ProductCard";
 import NotifyForm from "@/components/NotifyForm";
 
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "Limited releases and new arrivals. When they're gone, they're gone.",
 };
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<string, { label: string; dot: string }> = {
   upcoming: { label: "Upcoming", dot: "bg-zinc-300" },
   live:     { label: "Live Now", dot: "bg-black animate-pulse" },
   "sold-out": { label: "Sold Out", dot: "bg-zinc-200" },
@@ -25,7 +25,16 @@ function formatDate(iso: string) {
   });
 }
 
-export default function DropsPage() {
+export default async function DropsPage() {
+  const supabase = await createClient();
+
+  const { data: drops } = await supabase
+    .from("drops")
+    .select("*, drop_products(product_id, products(*))")
+    .order("date", { ascending: false });
+
+  const list = drops ?? [];
+
   return (
     <>
       <Header />
@@ -53,9 +62,19 @@ export default function DropsPage() {
 
         {/* — Drops list — */}
         <div className="mx-auto max-w-screen-xl px-4 md:px-8">
-          {drops.map((drop) => {
-            const status = STATUS_CONFIG[drop.status];
+          {list.length === 0 && (
+            <div className="py-20 text-center">
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-400">
+                No drops yet — check back soon.
+              </p>
+            </div>
+          )}
+          {list.map((drop) => {
+            const status = STATUS_CONFIG[drop.status] ?? STATUS_CONFIG.upcoming;
             const isSoldOut = drop.status === "sold-out";
+            const products = (drop.drop_products as any[])
+              ?.map((dp: any) => dp.products)
+              .filter(Boolean) ?? [];
 
             return (
               <section
@@ -86,9 +105,11 @@ export default function DropsPage() {
                     <h2 className="mb-4 text-3xl font-black uppercase leading-none tracking-tight text-black md:text-4xl">
                       {drop.title}
                     </h2>
-                    <p className="mb-6 max-w-lg text-sm leading-relaxed text-zinc-500">
-                      {drop.description}
-                    </p>
+                    {drop.description && (
+                      <p className="mb-6 max-w-lg text-sm leading-relaxed text-zinc-500">
+                        {drop.description}
+                      </p>
+                    )}
 
                     {drop.status === "upcoming" && <NotifyForm />}
 
@@ -101,9 +122,9 @@ export default function DropsPage() {
                 </div>
 
                 {/* Product grid */}
-                {drop.products.length > 0 && (
+                {products.length > 0 && (
                   <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
-                    {drop.products.map((product) => (
+                    {products.map((product: any) => (
                       <ProductCard key={product.id} product={product} />
                     ))}
                   </div>

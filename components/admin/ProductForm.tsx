@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { DBProduct, ProductColor } from "@/lib/database.types";
@@ -35,6 +35,9 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
   const [colors, setColors] = useState<ProductColor[]>(
     (initialData?.colors as ProductColor[]) ?? []
   );
+  const [images, setImages] = useState<string[]>(initialData?.images ?? []);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -73,6 +76,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
       colors,
       description: description.trim() || null,
       tag: tag || null,
+      images,
     };
 
     try {
@@ -115,6 +119,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
     setTag(initialData?.tag ?? "");
     setDescription(initialData?.description ?? "");
     setColors((initialData?.colors as ProductColor[]) ?? []);
+    setImages(initialData?.images ?? []);
     setErrors({});
     setIsDirty(false);
   }
@@ -275,22 +280,98 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
 
           {/* Images */}
           <div className="border border-zinc-200 bg-white p-6">
-            <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Images</h2>
-            {initialData?.images && initialData.images.length > 0 ? (
-              <div className="flex flex-col gap-3">
-                {initialData.images.map((url, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="relative h-16 w-14 flex-shrink-0 overflow-hidden border border-zinc-200 bg-zinc-50">
-                      <Image src={url} alt="" fill className="object-cover" sizes="56px" />
-                    </div>
-                    <p className="truncate text-[10px] text-zinc-400">{url}</p>
+            <h2 className="mb-4 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">
+              Images ({images.length})
+            </h2>
+            <div className="flex flex-col gap-3">
+              {images.map((url, i) => (
+                <div key={i} className="group flex items-center gap-3">
+                  <div className="relative h-16 w-14 flex-shrink-0 overflow-hidden border border-zinc-200 bg-zinc-50">
+                    <Image src={url} alt="" fill className="object-cover" sizes="56px" />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[10px] text-zinc-400">No images yet.</p>
-            )}
-            <p className="mt-4 text-[10px] text-zinc-400">Image upload coming soon.</p>
+                  <div className="flex flex-1 flex-col gap-1 min-w-0">
+                    <p className="truncate text-[10px] text-zinc-400">{url.split("/").pop()}</p>
+                    <div className="flex items-center gap-2">
+                      {i > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImages((prev) => {
+                              const next = [...prev];
+                              [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                              return next;
+                            });
+                            markDirty();
+                          }}
+                          className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 hover:text-black"
+                        >
+                          ↑
+                        </button>
+                      )}
+                      {i < images.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImages((prev) => {
+                              const next = [...prev];
+                              [next[i], next[i + 1]] = [next[i + 1], next[i]];
+                              return next;
+                            });
+                            markDirty();
+                          }}
+                          className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 hover:text-black"
+                        >
+                          ↓
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImages((prev) => prev.filter((_, j) => j !== i));
+                          markDirty();
+                        }}
+                        className="text-[9px] font-bold uppercase tracking-widest text-zinc-300 hover:text-red-500"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploading(true);
+                try {
+                  const fd = new FormData();
+                  fd.append("file", file);
+                  fd.append("bucket", "product-images");
+                  const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+                  const data = await res.json();
+                  if (res.ok) {
+                    setImages((prev) => [...prev, data.url]);
+                    markDirty();
+                  }
+                } finally {
+                  setUploading(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              disabled={uploading}
+              className="mt-3 w-full border border-dashed border-zinc-300 py-3 text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-colors hover:border-black hover:text-black disabled:opacity-50"
+            >
+              {uploading ? "Uploading…" : "+ Add Image"}
+            </button>
           </div>
         </div>
       </div>
@@ -302,7 +383,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
       )}
 
       {/* Sticky save bar */}
-      <div className="sticky bottom-0 -mx-6 mt-8 border-t border-zinc-200 bg-white px-6 py-4 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
+      <div className="sticky bottom-0 z-10 -mx-6 mt-8 border-t border-zinc-200 bg-white px-6 py-4 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10">
         <div className="flex items-center gap-4">
           <button
             type="submit"

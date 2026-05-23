@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const { id } = await params;
   const supabase = await createServiceClient();
   const body = await request.json();
@@ -20,6 +24,7 @@ export async function PATCH(
       colors: body.colors,
       description: body.description || null,
       tag: body.tag || null,
+      images: body.images ?? [],
     })
     .eq("id", id)
     .select()
@@ -33,6 +38,9 @@ export async function DELETE(
   _: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const { id } = await params;
   const supabase = await createServiceClient();
   const { error } = await supabase.from("products").delete().eq("id", id);

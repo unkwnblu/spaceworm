@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const { id } = await params;
   const supabase = await createServiceClient();
   const { productIds, ...fields } = await request.json();
@@ -24,7 +28,6 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Replace product associations
   await supabase.from("drop_products").delete().eq("drop_id", id);
   if (productIds?.length) {
     const { error: joinError } = await supabase.from("drop_products").insert(
@@ -40,6 +43,9 @@ export async function DELETE(
   _: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const { id } = await params;
   const supabase = await createServiceClient();
   const { error } = await supabase.from("drops").delete().eq("id", id);

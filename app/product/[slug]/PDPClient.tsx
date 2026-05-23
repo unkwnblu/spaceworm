@@ -1,20 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Product, toNGN } from "@/lib/mockData";
+import { useRouter } from "next/navigation";
+import type { DBProduct, ProductColor } from "@/lib/database.types";
+import { formatNGN } from "@/lib/database.types";
 import { useCart } from "@/context/CartContext";
 import ProductGallery from "@/components/ProductGallery";
 import SizeSelector from "@/components/SizeSelector";
 import ColorSelector from "@/components/ColorSelector";
 
 type Props = {
-  product: Product;
+  product: DBProduct;
 };
 
 export default function PDPClient({ product }: Props) {
+  const router = useRouter();
   const { addItem } = useCart();
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
-  const [selectedColor, setSelectedColor] = useState(product.colors[0].name);
+  const colors = (product.colors ?? []) as ProductColor[];
+  const [selectedColor, setSelectedColor] = useState(colors[0]?.name ?? "");
   const [added, setAdded] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
@@ -23,6 +27,11 @@ export default function PDPClient({ product }: Props) {
     addItem(product, selectedSize, selectedColor);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
+  }
+
+  function handleBuyNow() {
+    addItem(product, selectedSize, selectedColor);
+    router.push("/checkout");
   }
 
   return (
@@ -49,7 +58,7 @@ export default function PDPClient({ product }: Props) {
         </h1>
 
         {/* Price */}
-        <p className="mb-8 text-xl font-black text-black">{toNGN(product.price)}</p>
+        <p className="mb-8 text-xl font-black text-black">{formatNGN(product.price)}</p>
 
         {/* Divider */}
         <div className="mb-8 h-px w-full bg-zinc-100" />
@@ -60,7 +69,7 @@ export default function PDPClient({ product }: Props) {
             Color — <span className="text-black">{selectedColor}</span>
           </p>
           <ColorSelector
-            colors={product.colors}
+            colors={colors}
             selected={selectedColor}
             onChange={setSelectedColor}
           />
@@ -86,18 +95,25 @@ export default function PDPClient({ product }: Props) {
           />
         </div>
 
-        {/* Add to Cart */}
-        {/* TODO: Integrate Paystack on checkout */}
-        <button
-          onClick={handleAddToCart}
-          className={`w-full py-5 text-xs font-black uppercase tracking-[0.3em] transition-colors ${
-            added
-              ? "bg-zinc-800 text-white"
-              : "bg-black text-white hover:bg-zinc-800"
-          }`}
-        >
-          {added ? "Added to Cart ✓" : "Add to Cart"}
-        </button>
+        {/* Add to Cart + Buy Now */}
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handleAddToCart}
+            className={`w-full py-5 text-xs font-black uppercase tracking-[0.3em] transition-colors ${
+              added
+                ? "bg-zinc-800 text-white"
+                : "bg-black text-white hover:bg-zinc-800"
+            }`}
+          >
+            {added ? "Added to Cart ✓" : "Add to Cart"}
+          </button>
+          <button
+            onClick={handleBuyNow}
+            className="w-full border border-black py-5 text-xs font-black uppercase tracking-[0.3em] text-black transition-colors hover:bg-black hover:text-white"
+          >
+            Buy Now
+          </button>
+        </div>
 
         {/* Divider */}
         <div className="my-8 h-px w-full bg-zinc-100" />

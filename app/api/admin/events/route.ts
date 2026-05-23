@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const supabase = await createServiceClient();
   const { data, error } = await supabase
     .from("events")
@@ -22,6 +26,9 @@ function slugify(s: string) {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
+
   const supabase = await createServiceClient();
   const body = await request.json();
 

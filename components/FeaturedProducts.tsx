@@ -1,9 +1,17 @@
-import { products } from "@/lib/mockData";
+import { createClient } from "@/lib/supabase/server";
 import ProductCard from "./ProductCard";
 
-export default function FeaturedProducts() {
-  // TODO: Replace with Supabase fetch
-  const featured = products;
+export default async function FeaturedProducts() {
+  const supabase = await createClient();
+  const { data: products } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(8);
+
+  const featured = products ?? [];
+
+  if (featured.length === 0) return null;
 
   return (
     <section id="products" className="mx-auto max-w-screen-xl scroll-mt-14 px-4 py-16 md:px-8 md:py-24">

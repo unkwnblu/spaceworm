@@ -1,10 +1,10 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import { Product } from "@/lib/mockData";
+import type { DBProduct } from "@/lib/database.types";
 
 export type CartItem = {
-  product: Product;
+  product: DBProduct;
   size: string;
   color: string;
   quantity: number;
@@ -15,7 +15,7 @@ type CartContextType = {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (product: Product, size: string, color: string) => void;
+  addItem: (product: DBProduct, size: string, color: string) => void;
   removeItem: (productId: string, size: string, color: string) => void;
   updateQuantity: (productId: string, size: string, color: string, quantity: number) => void;
   totalItems: number;
@@ -31,7 +31,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
-  const addItem = useCallback((product: Product, size: string, color: string) => {
+  const addItem = useCallback((product: DBProduct, size: string, color: string) => {
     setItems((prev) => {
       const existing = prev.find(
         (i) => i.product.id === product.id && i.size === size && i.color === color

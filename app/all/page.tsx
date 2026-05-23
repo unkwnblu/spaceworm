@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
-import { products } from "@/lib/mockData";
+import { createClient } from "@/lib/supabase/server";
 import AllClient from "./AllClient";
 
 export const metadata: Metadata = {
@@ -9,7 +9,13 @@ export const metadata: Metadata = {
   description: "The full Spaceworm catalogue. Filter by gender, category, and price.",
 };
 
-export default function AllPage() {
+export default async function AllPage() {
+  const supabase = await createClient();
+  const { data: products } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: false });
+
   return (
     <>
       <Header />
@@ -29,7 +35,7 @@ export default function AllPage() {
         </div>
 
         <Suspense>
-          <AllClient products={products} />
+          <AllClient products={products ?? []} />
         </Suspense>
       </main>
     </>
