@@ -113,6 +113,7 @@ async function ensureOrderExists(result: {
           color: item.color ?? null,
           quantity: item.quantity,
           unit_price: item.unitPriceNGN,
+          customization: item.customization ?? null,
         }))
       );
       if (itemsError) throw itemsError;

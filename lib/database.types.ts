@@ -25,6 +25,8 @@ export type Database = {
           category: string;
           gender: string;
           tag: string | null;
+          customizable: boolean;
+          customization_cost: number; // NGN, whole naira
           created_at: string;
           updated_at: string;
         };
@@ -40,6 +42,8 @@ export type Database = {
           category: string;
           gender: string;
           tag?: string | null;
+          customizable?: boolean;
+          customization_cost?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -55,6 +59,8 @@ export type Database = {
           category?: string;
           gender?: string;
           tag?: string | null;
+          customizable?: boolean;
+          customization_cost?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -232,6 +238,7 @@ export type Database = {
           color: string | null;
           quantity: number;
           unit_price: number;             // NGN at time of order
+          customization: Json | null;     // { name, number, imageUrl, cost } | null
           created_at: string;
         };
         Insert: {
@@ -244,6 +251,7 @@ export type Database = {
           color?: string | null;
           quantity?: number;
           unit_price: number;
+          customization?: Json | null;
           created_at?: string;
         };
         Update: {
@@ -256,6 +264,7 @@ export type Database = {
           color?: string | null;
           quantity?: number;
           unit_price?: number;
+          customization?: Json | null;
         };
         Relationships: [
           {
@@ -345,6 +354,14 @@ export type DBWaitlist   = Tables<"waitlist">;
 
 // Color item shape stored inside products.colors (JSONB)
 export type ProductColor = { name: string; hex: string };
+
+// Customization shape stored inside order_items.customization (JSONB)
+export type Customization = {
+  name: string;
+  number: string;
+  imageUrl: string;
+  cost: number; // NGN, whole naira
+};
 
 export function formatNGN(ngn: number): string {
   return new Intl.NumberFormat("en-NG", {

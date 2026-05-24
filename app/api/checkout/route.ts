@@ -7,7 +7,13 @@ export interface CheckoutItem {
   size: string;
   color: string;
   quantity: number;
-  unitPriceNGN: number; // whole naira
+  unitPriceNGN: number; // whole naira (includes customization cost if any)
+  customization?: {
+    name: string;
+    number: string;
+    imageUrl: string;
+    cost: number;
+  } | null;
 }
 
 export interface CustomerInfo {

@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { DBProduct, ProductColor } from "@/lib/database.types";
+import Image from "next/image";
+import type { DBProduct, ProductColor, Customization } from "@/lib/database.types";
 import { formatNGN } from "@/lib/database.types";
 import { useCart } from "@/context/CartContext";
 import ProductGallery from "@/components/ProductGallery";
 import SizeSelector from "@/components/SizeSelector";
 import ColorSelector from "@/components/ColorSelector";
+import { uploadCustomizationFile } from "@/lib/upload";
 
 type Props = {
   product: DBProduct;
@@ -23,15 +25,51 @@ export default function PDPClient({ product }: Props) {
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
+  // Customization state
+  const [customizeOn, setCustomizeOn] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customNumber, setCustomNumber] = useState("");
+  const [customImageUrl, setCustomImageUrl] = useState("");
+  const [uploadingCustom, setUploadingCustom] = useState(false);
+  const [customError, setCustomError] = useState("");
+  const customFileRef = useRef<HTMLInputElement>(null);
+
+  const customizationCost = product.customization_cost ?? 0;
+  const totalUnitPrice = product.price + (customizeOn ? customizationCost : 0);
+
+  function buildCustomization(): Customization | null {
+    if (!customizeOn) return null;
+    if (!customName.trim() && !customNumber.trim() && !customImageUrl) return null;
+    return {
+      name: customName.trim(),
+      number: customNumber.trim(),
+      imageUrl: customImageUrl,
+      cost: customizationCost,
+    };
+  }
+
   function handleAddToCart() {
-    addItem(product, selectedSize, selectedColor);
+    addItem(product, selectedSize, selectedColor, buildCustomization());
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   }
 
   function handleBuyNow() {
-    addItem(product, selectedSize, selectedColor);
+    addItem(product, selectedSize, selectedColor, buildCustomization());
     router.push("/checkout");
+  }
+
+  async function handleCustomFile(file: File) {
+    setCustomError("");
+    setUploadingCustom(true);
+    try {
+      const result = await uploadCustomizationFile(file);
+      setCustomImageUrl(result.url);
+    } catch (err) {
+      setCustomError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploadingCustom(false);
+    }
   }
 
   return (
@@ -58,7 +96,14 @@ export default function PDPClient({ product }: Props) {
         </h1>
 
         {/* Price */}
-        <p className="mb-8 text-xl font-black text-black">{formatNGN(product.price)}</p>
+        <p className="mb-8 text-xl font-black text-black">
+          {formatNGN(totalUnitPrice)}
+          {customizeOn && customizationCost > 0 && (
+            <span className="ml-2 text-xs font-semibold text-zinc-400">
+              ({formatNGN(product.price)} + {formatNGN(customizationCost)} custom)
+            </span>
+          )}
+        </p>
 
         {/* Divider */}
         <div className="mb-8 h-px w-full bg-zinc-100" />
@@ -95,11 +140,128 @@ export default function PDPClient({ product }: Props) {
           />
         </div>
 
+        {/* Customization */}
+        {product.customizable && (
+          <div className="mb-8 border border-zinc-200 bg-zinc-50">
+            <label className="flex cursor-pointer items-start gap-3 p-4">
+              <input
+                type="checkbox"
+                checked={customizeOn}
+                onChange={(e) => setCustomizeOn(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-black"
+              />
+              <div className="flex-1">
+                <p className="text-xs font-black uppercase tracking-widest text-black">
+                  Customize this piece
+                </p>
+                <p className="mt-1 text-[11px] text-zinc-500">
+                  Add a name, number, or upload your own image.
+                  {customizationCost > 0 && (
+                    <> Adds <span className="font-bold text-black">{formatNGN(customizationCost)}</span>.</>
+                  )}
+                </p>
+              </div>
+            </label>
+
+            {customizeOn && (
+              <div className="border-t border-zinc-200 bg-white p-4">
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value)}
+                      maxLength={20}
+                      className="w-full border border-zinc-300 px-3 py-2.5 text-sm text-black outline-none focus:border-black"
+                      placeholder="e.g. SPACEWORM"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      Number
+                    </label>
+                    <input
+                      type="text"
+                      value={customNumber}
+                      onChange={(e) => setCustomNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                      maxLength={3}
+                      className="w-full border border-zinc-300 px-3 py-2.5 text-sm text-black outline-none focus:border-black"
+                      placeholder="e.g. 07"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      Image (optional)
+                    </label>
+                    <input
+                      ref={customFileRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleCustomFile(f);
+                        e.target.value = "";
+                      }}
+                    />
+                    {customImageUrl ? (
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-20 w-20 overflow-hidden border border-zinc-200 bg-zinc-50">
+                          <Image src={customImageUrl} alt="Custom" fill className="object-cover" sizes="80px" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <button
+                            type="button"
+                            onClick={() => customFileRef.current?.click()}
+                            disabled={uploadingCustom}
+                            className="text-[10px] font-black uppercase tracking-widest text-zinc-500 underline hover:text-black"
+                          >
+                            Replace
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCustomImageUrl("")}
+                            className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => customFileRef.current?.click()}
+                        disabled={uploadingCustom}
+                        className="w-full border border-dashed border-zinc-300 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-colors hover:border-black hover:text-black disabled:opacity-50"
+                      >
+                        {uploadingCustom ? "Uploading…" : "+ Upload Image"}
+                      </button>
+                    )}
+                    {customError && (
+                      <p className="mt-2 text-[10px] font-semibold text-red-500">{customError}</p>
+                    )}
+                  </div>
+
+                  <p className="mt-1 text-[10px] text-zinc-400">
+                    Customization is final once your order is placed.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Add to Cart + Buy Now */}
         <div className="flex flex-col gap-3">
           <button
             onClick={handleAddToCart}
-            className={`w-full py-5 text-xs font-black uppercase tracking-[0.3em] transition-colors ${
+            disabled={uploadingCustom}
+            className={`w-full py-5 text-xs font-black uppercase tracking-[0.3em] transition-colors disabled:opacity-50 ${
               added
                 ? "bg-zinc-800 text-white"
                 : "bg-black text-white hover:bg-zinc-800"
@@ -109,7 +271,8 @@ export default function PDPClient({ product }: Props) {
           </button>
           <button
             onClick={handleBuyNow}
-            className="w-full border border-black py-5 text-xs font-black uppercase tracking-[0.3em] text-black transition-colors hover:bg-black hover:text-white"
+            disabled={uploadingCustom}
+            className="w-full border border-black py-5 text-xs font-black uppercase tracking-[0.3em] text-black transition-colors hover:bg-black hover:text-white disabled:opacity-50"
           >
             Buy Now
           </button>

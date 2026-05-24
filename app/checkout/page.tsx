@@ -89,7 +89,8 @@ export default function CheckoutPage() {
       size: item.size,
       color: item.color,
       quantity: item.quantity,
-      unitPriceNGN: item.product.price,
+      unitPriceNGN: item.product.price + (item.customization?.cost ?? 0),
+      customization: item.customization ?? null,
     }));
 
     setLoading(true);
@@ -290,26 +291,34 @@ export default function CheckoutPage() {
               <p className={sectionLabel}>Order Summary</p>
 
               <ul className="mb-6 divide-y divide-zinc-100">
-                {items.map((item) => (
-                  <li key={`${item.product.id}-${item.size}-${item.color}`} className="flex gap-4 py-4">
-                    <div className="relative h-20 w-16 shrink-0 overflow-hidden bg-zinc-100">
-                      {item.product.images[0] && (
-                        <Image src={item.product.images[0]} alt={item.product.name} fill
-                          className="object-cover" sizes="64px" />
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col justify-between">
-                      <div>
-                        <p className="text-xs font-bold uppercase tracking-wide">{item.product.name}</p>
-                        <p className="mt-0.5 text-[10px] text-zinc-500">{item.size} / {item.color}</p>
+                {items.map((item, idx) => {
+                  const unit = item.product.price + (item.customization?.cost ?? 0);
+                  return (
+                    <li key={`${item.product.id}-${item.size}-${item.color}-${idx}`} className="flex gap-4 py-4">
+                      <div className="relative h-20 w-16 shrink-0 overflow-hidden bg-zinc-100">
+                        {item.product.images[0] && (
+                          <Image src={item.product.images[0]} alt={item.product.name} fill
+                            className="object-cover" sizes="64px" />
+                        )}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-zinc-400">Qty {item.quantity}</span>
-                        <span className="text-xs font-bold">{formatNGN(item.product.price * item.quantity)}</span>
+                      <div className="flex flex-1 flex-col justify-between">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-wide">{item.product.name}</p>
+                          <p className="mt-0.5 text-[10px] text-zinc-500">{item.size} / {item.color}</p>
+                          {item.customization && (
+                            <p className="mt-1 text-[10px] text-zinc-400">
+                              Custom · {[item.customization.name, item.customization.number && `#${item.customization.number}`, item.customization.imageUrl && "image"].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-zinc-400">Qty {item.quantity}</span>
+                          <span className="text-xs font-bold">{formatNGN(unit * item.quantity)}</span>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
 
               {/* Totals */}

@@ -53,3 +53,38 @@ export async function uploadFile(
 
   return { url: data.publicUrl, path: data.path };
 }
+
+/**
+ * Public upload for customer-supplied customization images.
+ * Hits the unauthenticated /api/upload-customization endpoint.
+ */
+export async function uploadCustomizationFile(file: File): Promise<UploadResult> {
+  if (!ALLOWED_TYPES.has(file.type)) {
+    throw new Error(`Unsupported file type: ${file.type}`);
+  }
+  if (file.size > MAX_BYTES) {
+    throw new Error("File too large (max 20 MB)");
+  }
+
+  const res = await fetch("/api/upload-customization", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name, contentType: file.type }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Failed to get upload URL");
+
+  const uploadRes = await fetch(data.signedUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+
+  if (!uploadRes.ok) {
+    const errText = await uploadRes.text();
+    throw new Error(`Upload failed: ${errText}`);
+  }
+
+  return { url: data.publicUrl, path: data.path };
+}

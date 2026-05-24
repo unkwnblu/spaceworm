@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     const items = metadata?.items ?? [];
     if (items.length > 0) {
       const { error: itemsError } = await supabase.from("order_items").insert(
-        items.map((item: { productId?: string; name: string; image?: string; size: string; color?: string; quantity: number; unitPriceNGN: number }) => ({
+        items.map((item: { productId?: string; name: string; image?: string; size: string; color?: string; quantity: number; unitPriceNGN: number; customization?: { name: string; number: string; imageUrl: string; cost: number } | null }) => ({
           order_id: order.id,
           product_id: item.productId ?? null,
           product_name: item.name,
@@ -114,6 +114,7 @@ export async function POST(request: Request) {
           color: item.color ?? null,
           quantity: item.quantity,
           unit_price: item.unitPriceNGN,
+          customization: item.customization ?? null,
         }))
       );
       if (itemsError) {

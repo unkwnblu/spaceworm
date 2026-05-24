@@ -15,6 +15,8 @@ const mockProduct: DBProduct = {
   category: "T-Shirts",
   gender: "Unisex",
   tag: null,
+  customizable: false,
+  customization_cost: 0,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
 };
@@ -74,7 +76,8 @@ describe("CartContext", () => {
     act(() => result.current.addItem(mockProduct2, "L", "Black"));
     expect(result.current.items).toHaveLength(2);
 
-    act(() => result.current.removeItem("prod-1", "M", "Black"));
+    const key = result.current.getKey(result.current.items[0]);
+    act(() => result.current.removeItem(key));
     expect(result.current.items).toHaveLength(1);
     expect(result.current.items[0].product.id).toBe("prod-2");
   });
@@ -82,7 +85,8 @@ describe("CartContext", () => {
   it("updates quantity", () => {
     const { result } = setup();
     act(() => result.current.addItem(mockProduct, "M", "Black"));
-    act(() => result.current.updateQuantity("prod-1", "M", "Black", 5));
+    const key = result.current.getKey(result.current.items[0]);
+    act(() => result.current.updateQuantity(key, 5));
     expect(result.current.items[0].quantity).toBe(5);
     expect(result.current.totalItems).toBe(5);
   });
@@ -90,7 +94,8 @@ describe("CartContext", () => {
   it("removes item when quantity set to 0", () => {
     const { result } = setup();
     act(() => result.current.addItem(mockProduct, "M", "Black"));
-    act(() => result.current.updateQuantity("prod-1", "M", "Black", 0));
+    const key = result.current.getKey(result.current.items[0]);
+    act(() => result.current.updateQuantity(key, 0));
     expect(result.current.items).toHaveLength(0);
   });
 

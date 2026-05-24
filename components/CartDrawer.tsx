@@ -7,7 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { formatNGN } from "@/lib/database.types";
 
 export default function CartDrawer() {
-  const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice } =
+  const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice, getKey } =
     useCart();
 
   useEffect(() => {
@@ -71,88 +71,96 @@ export default function CartDrawer() {
             </div>
           ) : (
             <ul className="divide-y divide-zinc-100">
-              {items.map((item) => (
-                <li
-                  key={`${item.product.id}-${item.size}-${item.color}`}
-                  className="flex gap-4 p-4"
-                >
-                  {/* Thumbnail */}
-                  <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-zinc-100">
-                    <Image
-                      src={item.product.images[0]}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover"
-                      sizes="80px"
-                    />
-                  </div>
-
-                  {/* Details */}
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div>
-                      <Link
-                        href={`/product/${item.product.slug}`}
-                        onClick={closeCart}
-                        className="text-xs font-bold uppercase tracking-wide hover:underline"
-                      >
-                        {item.product.name}
-                      </Link>
-                      <p className="mt-0.5 text-xs text-zinc-500">
-                        {item.size} / {item.color}
-                      </p>
+              {items.map((item) => {
+                const key = getKey(item);
+                const unit = item.product.price + (item.customization?.cost ?? 0);
+                return (
+                  <li key={key} className="flex gap-4 p-4">
+                    {/* Thumbnail */}
+                    <div className="relative h-24 w-20 shrink-0 overflow-hidden bg-zinc-100">
+                      <Image
+                        src={item.product.images[0]}
+                        alt={item.product.name}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      {/* Quantity controls */}
-                      <div className="flex items-center border border-zinc-200">
-                        <button
-                          className="flex h-7 w-7 items-center justify-center text-sm hover:bg-zinc-50"
-                          onClick={() =>
-                            updateQuantity(
-                              item.product.id,
-                              item.size,
-                              item.color,
-                              item.quantity - 1
-                            )
-                          }
+                    {/* Details */}
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div>
+                        <Link
+                          href={`/product/${item.product.slug}`}
+                          onClick={closeCart}
+                          className="text-xs font-bold uppercase tracking-wide hover:underline"
                         >
-                          −
-                        </button>
-                        <span className="flex h-7 w-8 items-center justify-center text-xs font-semibold">
-                          {item.quantity}
-                        </span>
-                        <button
-                          className="flex h-7 w-7 items-center justify-center text-sm hover:bg-zinc-50"
-                          onClick={() =>
-                            updateQuantity(
-                              item.product.id,
-                              item.size,
-                              item.color,
-                              item.quantity + 1
-                            )
-                          }
-                        >
-                          +
-                        </button>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-xs font-bold">
-                          {formatNGN(item.product.price * item.quantity)}
+                          {item.product.name}
+                        </Link>
+                        <p className="mt-0.5 text-xs text-zinc-500">
+                          {item.size} / {item.color}
                         </p>
-                        <button
-                          onClick={() =>
-                            removeItem(item.product.id, item.size, item.color)
-                          }
-                          className="text-[10px] uppercase tracking-wider text-zinc-400 hover:text-black"
-                        >
-                          Remove
-                        </button>
+
+                        {/* Customization details */}
+                        {item.customization && (
+                          <div className="mt-1.5 border-l-2 border-black pl-2">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-black">
+                              Customized
+                            </p>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-zinc-500">
+                              {item.customization.name && (
+                                <span>“{item.customization.name}”</span>
+                              )}
+                              {item.customization.number && (
+                                <span>#{item.customization.number}</span>
+                              )}
+                              {item.customization.imageUrl && (
+                                <span>· Image attached</span>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-[10px] text-zinc-400">
+                              +{formatNGN(item.customization.cost)} customization
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        {/* Quantity controls */}
+                        <div className="flex items-center border border-zinc-200">
+                          <button
+                            className="flex h-7 w-7 items-center justify-center text-sm hover:bg-zinc-50"
+                            onClick={() => updateQuantity(key, item.quantity - 1)}
+                          >
+                            −
+                          </button>
+                          <span className="flex h-7 w-8 items-center justify-center text-xs font-semibold">
+                            {item.quantity}
+                          </span>
+                          <button
+                            className="flex h-7 w-7 items-center justify-center text-sm hover:bg-zinc-50"
+                            onClick={() => updateQuantity(key, item.quantity + 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-xs font-bold">
+                            {formatNGN(unit * item.quantity)}
+                          </p>
+                          <button
+                            onClick={() => removeItem(key)}
+                            className="text-[10px] uppercase tracking-wider text-zinc-400 hover:text-black"
+                          >
+                            Remove
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

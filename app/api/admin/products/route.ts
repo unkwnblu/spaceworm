@@ -41,6 +41,8 @@ export async function POST(request: Request) {
       description: body.description || null,
       tag: body.tag || null,
       images: body.images ?? [],
+      customizable: !!body.customizable,
+      customization_cost: Math.round(Number(body.customization_cost ?? 0)),
     })
     .select()
     .single();

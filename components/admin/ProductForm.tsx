@@ -37,6 +37,10 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
     (initialData?.colors as ProductColor[]) ?? []
   );
   const [images, setImages] = useState<string[]>(initialData?.images ?? []);
+  const [customizable, setCustomizable] = useState<boolean>(initialData?.customizable ?? false);
+  const [customizationCost, setCustomizationCost] = useState<string>(
+    initialData?.customization_cost != null ? String(initialData.customization_cost) : ""
+  );
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
@@ -79,6 +83,8 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
       description: description.trim() || null,
       tag: tag || null,
       images,
+      customizable,
+      customization_cost: customizable ? Math.round(parseFloat(customizationCost) || 0) : 0,
     };
 
     try {
@@ -122,6 +128,8 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
     setDescription(initialData?.description ?? "");
     setColors((initialData?.colors as ProductColor[]) ?? []);
     setImages(initialData?.images ?? []);
+    setCustomizable(initialData?.customizable ?? false);
+    setCustomizationCost(initialData?.customization_cost != null ? String(initialData.customization_cost) : "");
     setErrors({});
     setIsDirty(false);
   }
@@ -237,6 +245,41 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                   onChange={(e) => { setDescription(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
+
+              {/* Customization toggle */}
+              <div className="border border-zinc-200 bg-zinc-50 p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={customizable}
+                    onChange={(e) => { setCustomizable(e.target.checked); markDirty(); }}
+                    className="mt-0.5 h-4 w-4 accent-black"
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs font-black uppercase tracking-widest text-black">
+                      Allow Customization
+                    </p>
+                    <p className="mt-1 text-[11px] text-zinc-500">
+                      Customers can add a name, number, and image to this product for an additional fee.
+                    </p>
+                  </div>
+                </label>
+
+                {customizable && (
+                  <div className="mt-4 pl-7">
+                    <AdminFormField label="Additional Cost (NGN)" hint="Flat fee added per customized item">
+                      <input
+                        type="number"
+                        className={inputClass}
+                        value={customizationCost}
+                        onChange={(e) => { setCustomizationCost(e.target.value); markDirty(); }}
+                        min={0}
+                        placeholder="0"
+                      />
+                    </AdminFormField>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </form>

@@ -1,28 +1,43 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-import type { DBProduct } from "@/lib/database.types";
+import type { DBProduct, Customization } from "@/lib/database.types";
 
 export type CartItem = {
   product: DBProduct;
   size: string;
   color: string;
   quantity: number;
+  customization?: Customization | null;
 };
+
+// Stable key per cart line — customised items get unique keys so they don't
+// merge with non-customised lines.
+function itemKey(productId: string, size: string, color: string, c?: Customization | null) {
+  if (!c) return `${productId}|${size}|${color}|plain`;
+  return `${productId}|${size}|${color}|${c.name}|${c.number}|${c.imageUrl}`;
+}
 
 type CartContextType = {
   items: CartItem[];
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (product: DBProduct, size: string, color: string) => void;
-  removeItem: (productId: string, size: string, color: string) => void;
-  updateQuantity: (productId: string, size: string, color: string, quantity: number) => void;
+  addItem: (product: DBProduct, size: string, color: string, customization?: Customization | null) => void;
+  removeItem: (key: string) => void;
+  updateQuantity: (key: string, quantity: number) => void;
+  getKey: (item: CartItem) => string;
   totalItems: number;
   totalPrice: number;
 };
 
 const CartContext = createContext<CartContextType | null>(null);
+
+function lineTotal(item: CartItem): number {
+  const base = item.product.price;
+  const custom = item.customization?.cost ?? 0;
+  return (base + custom) * item.quantity;
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -31,50 +46,60 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
 
-  const addItem = useCallback((product: DBProduct, size: string, color: string) => {
-    setItems((prev) => {
-      const existing = prev.find(
-        (i) => i.product.id === product.id && i.size === size && i.color === color
-      );
-      if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id && i.size === size && i.color === color
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
+  const addItem = useCallback(
+    (product: DBProduct, size: string, color: string, customization?: Customization | null) => {
+      setItems((prev) => {
+        const key = itemKey(product.id, size, color, customization);
+        const existing = prev.find(
+          (i) => itemKey(i.product.id, i.size, i.color, i.customization) === key
         );
-      }
-      return [...prev, { product, size, color, quantity: 1 }];
-    });
-    setIsOpen(true);
-  }, []);
+        if (existing) {
+          return prev.map((i) =>
+            itemKey(i.product.id, i.size, i.color, i.customization) === key
+              ? { ...i, quantity: i.quantity + 1 }
+              : i
+          );
+        }
+        return [...prev, { product, size, color, quantity: 1, customization: customization ?? null }];
+      });
+      setIsOpen(true);
+    },
+    []
+  );
 
-  const removeItem = useCallback((productId: string, size: string, color: string) => {
+  const removeItem = useCallback((key: string) => {
     setItems((prev) =>
       prev.filter(
-        (i) => !(i.product.id === productId && i.size === size && i.color === color)
+        (i) => itemKey(i.product.id, i.size, i.color, i.customization) !== key
       )
     );
   }, []);
 
-  const updateQuantity = useCallback(
-    (productId: string, size: string, color: string, quantity: number) => {
-      if (quantity <= 0) {
-        removeItem(productId, size, color);
-        return;
-      }
+  const updateQuantity = useCallback((key: string, quantity: number) => {
+    if (quantity <= 0) {
       setItems((prev) =>
-        prev.map((i) =>
-          i.product.id === productId && i.size === size && i.color === color
-            ? { ...i, quantity }
-            : i
+        prev.filter(
+          (i) => itemKey(i.product.id, i.size, i.color, i.customization) !== key
         )
       );
-    },
-    [removeItem]
+      return;
+    }
+    setItems((prev) =>
+      prev.map((i) =>
+        itemKey(i.product.id, i.size, i.color, i.customization) === key
+          ? { ...i, quantity }
+          : i
+      )
+    );
+  }, []);
+
+  const getKey = useCallback(
+    (item: CartItem) => itemKey(item.product.id, item.size, item.color, item.customization),
+    []
   );
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-  const totalPrice = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const totalPrice = items.reduce((sum, i) => sum + lineTotal(i), 0);
 
   return (
     <CartContext.Provider
@@ -86,6 +111,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addItem,
         removeItem,
         updateQuantity,
+        getKey,
         totalItems,
         totalPrice,
       }}

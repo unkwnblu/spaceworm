@@ -25,6 +25,8 @@ export async function PATCH(
       description: body.description || null,
       tag: body.tag || null,
       images: body.images ?? [],
+      customizable: !!body.customizable,
+      customization_cost: Math.round(Number(body.customization_cost ?? 0)),
     })
     .eq("id", id)
     .select()

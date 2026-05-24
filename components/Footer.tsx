@@ -66,7 +66,7 @@ export default function Footer({ variant = "full" }: Props) {
                 { label: "About", href: "/about" },
                 { label: "Drops", href: "/drops" },
                 { label: "Events", href: "/events" },
-                { label: "Instagram", href: "https://instagram.com/spaceworm", external: true },
+                { label: "Instagram", href: "https://instagram.com/spworm.xyz", external: true },
                 { label: "Press", href: "mailto:press@spaceworm.co", external: true },
               ],
             },

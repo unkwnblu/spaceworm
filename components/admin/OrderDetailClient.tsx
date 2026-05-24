@@ -4,6 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AdminStatusBadge, { type Status } from "./AdminStatusBadge";
 
+type CustomizationInfo = {
+  name: string;
+  number: string;
+  imageUrl: string;
+  cost: number;
+};
+
 type OrderItem = {
   id: string;
   product_name: string;
@@ -12,6 +19,7 @@ type OrderItem = {
   color: string | null;
   quantity: number;
   unit_price: number;
+  customization: CustomizationInfo | null;
 };
 
 type ShippingAddress = {
@@ -126,7 +134,7 @@ export default function OrderDetailClient({ order: initial }: { order: Order }) 
           </h3>
           <div className="border border-zinc-200 bg-white divide-y divide-zinc-100">
             {order.order_items.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 p-4">
+              <div key={item.id} className="flex items-start gap-4 p-4">
                 {item.product_image ? (
                   <img
                     src={item.product_image}
@@ -144,6 +152,28 @@ export default function OrderDetailClient({ order: initial }: { order: Order }) 
                     Size: {item.size}
                     {item.color && <> · Color: {item.color}</>}
                   </p>
+                  {item.customization && (
+                    <div className="mt-2 border-l-2 border-black pl-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-black">
+                        Customization (+{fmt(item.customization.cost)})
+                      </p>
+                      <div className="mt-1 text-[10px] text-zinc-600 space-y-0.5">
+                        {item.customization.name && <p>Name: <span className="font-semibold">{item.customization.name}</span></p>}
+                        {item.customization.number && <p>Number: <span className="font-semibold">{item.customization.number}</span></p>}
+                        {item.customization.imageUrl && (
+                          <a
+                            href={item.customization.imageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-1 underline hover:text-black"
+                          >
+                            <img src={item.customization.imageUrl} alt="Custom" className="h-10 w-10 object-cover border border-zinc-200" />
+                            View full image →
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-semibold text-zinc-700">
