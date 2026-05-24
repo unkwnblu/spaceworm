@@ -17,6 +17,9 @@ const mockProduct: DBProduct = {
   tag: null,
   customizable: false,
   customization_cost: 0,
+  allow_custom_name: true,
+  allow_custom_number: true,
+  allow_custom_image: true,
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
 };

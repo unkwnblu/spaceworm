@@ -41,6 +41,9 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
   const [customizationCost, setCustomizationCost] = useState<string>(
     initialData?.customization_cost != null ? String(initialData.customization_cost) : ""
   );
+  const [allowName, setAllowName] = useState<boolean>(initialData?.allow_custom_name ?? true);
+  const [allowNumber, setAllowNumber] = useState<boolean>(initialData?.allow_custom_number ?? true);
+  const [allowImage, setAllowImage] = useState<boolean>(initialData?.allow_custom_image ?? true);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
@@ -85,6 +88,9 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
       images,
       customizable,
       customization_cost: customizable ? Math.round(parseFloat(customizationCost) || 0) : 0,
+      allow_custom_name: allowName,
+      allow_custom_number: allowNumber,
+      allow_custom_image: allowImage,
     };
 
     try {
@@ -130,6 +136,9 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
     setImages(initialData?.images ?? []);
     setCustomizable(initialData?.customizable ?? false);
     setCustomizationCost(initialData?.customization_cost != null ? String(initialData.customization_cost) : "");
+    setAllowName(initialData?.allow_custom_name ?? true);
+    setAllowNumber(initialData?.allow_custom_number ?? true);
+    setAllowImage(initialData?.allow_custom_image ?? true);
     setErrors({});
     setIsDirty(false);
   }
@@ -266,7 +275,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                 </label>
 
                 {customizable && (
-                  <div className="mt-4 pl-7">
+                  <div className="mt-4 pl-7 space-y-4">
                     <AdminFormField label="Additional Cost (NGN)" hint="Flat fee added per customized item">
                       <input
                         type="number"
@@ -277,6 +286,46 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                         placeholder="0"
                       />
                     </AdminFormField>
+
+                    <div>
+                      <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        Available Fields
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <label className="flex cursor-pointer items-center justify-between border border-zinc-200 bg-white px-3 py-2.5">
+                          <span className="text-xs font-semibold text-black">Name</span>
+                          <input
+                            type="checkbox"
+                            checked={allowName}
+                            onChange={(e) => { setAllowName(e.target.checked); markDirty(); }}
+                            className="h-4 w-4 accent-black"
+                          />
+                        </label>
+                        <label className="flex cursor-pointer items-center justify-between border border-zinc-200 bg-white px-3 py-2.5">
+                          <span className="text-xs font-semibold text-black">Number</span>
+                          <input
+                            type="checkbox"
+                            checked={allowNumber}
+                            onChange={(e) => { setAllowNumber(e.target.checked); markDirty(); }}
+                            className="h-4 w-4 accent-black"
+                          />
+                        </label>
+                        <label className="flex cursor-pointer items-center justify-between border border-zinc-200 bg-white px-3 py-2.5">
+                          <span className="text-xs font-semibold text-black">Image upload</span>
+                          <input
+                            type="checkbox"
+                            checked={allowImage}
+                            onChange={(e) => { setAllowImage(e.target.checked); markDirty(); }}
+                            className="h-4 w-4 accent-black"
+                          />
+                        </label>
+                      </div>
+                      {!allowName && !allowNumber && !allowImage && (
+                        <p className="mt-2 text-[10px] font-semibold text-red-500">
+                          Enable at least one field for customization to work.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

@@ -141,7 +141,7 @@ export default function PDPClient({ product }: Props) {
         </div>
 
         {/* Customization */}
-        {product.customizable && (
+        {product.customizable && (product.allow_custom_name || product.allow_custom_number || product.allow_custom_image) && (
           <div className="mb-8 border border-zinc-200 bg-zinc-50">
             <label className="flex cursor-pointer items-start gap-3 p-4">
               <input
@@ -166,86 +166,92 @@ export default function PDPClient({ product }: Props) {
             {customizeOn && (
               <div className="border-t border-zinc-200 bg-white p-4">
                 <div className="flex flex-col gap-3">
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                      Name
-                    </label>
-                    <input
-                      type="text"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      maxLength={20}
-                      className="w-full border border-zinc-300 px-3 py-2.5 text-sm text-black outline-none focus:border-black"
-                      placeholder="e.g. SPACEWORM"
-                    />
-                  </div>
+                  {product.allow_custom_name && (
+                    <div>
+                      <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        maxLength={20}
+                        className="w-full border border-zinc-300 px-3 py-2.5 text-sm text-black outline-none focus:border-black"
+                        placeholder="e.g. SPACEWORM"
+                      />
+                    </div>
+                  )}
 
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                      Number
-                    </label>
-                    <input
-                      type="text"
-                      value={customNumber}
-                      onChange={(e) => setCustomNumber(e.target.value.replace(/[^0-9]/g, ""))}
-                      maxLength={3}
-                      className="w-full border border-zinc-300 px-3 py-2.5 text-sm text-black outline-none focus:border-black"
-                      placeholder="e.g. 07"
-                    />
-                  </div>
+                  {product.allow_custom_number && (
+                    <div>
+                      <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        Number
+                      </label>
+                      <input
+                        type="text"
+                        value={customNumber}
+                        onChange={(e) => setCustomNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                        maxLength={3}
+                        className="w-full border border-zinc-300 px-3 py-2.5 text-sm text-black outline-none focus:border-black"
+                        placeholder="e.g. 07"
+                      />
+                    </div>
+                  )}
 
-                  <div>
-                    <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
-                      Image (optional)
-                    </label>
-                    <input
-                      ref={customFileRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleCustomFile(f);
-                        e.target.value = "";
-                      }}
-                    />
-                    {customImageUrl ? (
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-20 w-20 overflow-hidden border border-zinc-200 bg-zinc-50">
-                          <Image src={customImageUrl} alt="Custom" fill className="object-cover" sizes="80px" />
+                  {product.allow_custom_image && (
+                    <div>
+                      <label className="mb-1.5 block text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                        Image
+                      </label>
+                      <input
+                        ref={customFileRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleCustomFile(f);
+                          e.target.value = "";
+                        }}
+                      />
+                      {customImageUrl ? (
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-20 w-20 overflow-hidden border border-zinc-200 bg-zinc-50">
+                            <Image src={customImageUrl} alt="Custom" fill className="object-cover" sizes="80px" />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <button
+                              type="button"
+                              onClick={() => customFileRef.current?.click()}
+                              disabled={uploadingCustom}
+                              className="text-[10px] font-black uppercase tracking-widest text-zinc-500 underline hover:text-black"
+                            >
+                              Replace
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setCustomImageUrl("")}
+                              className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <button
-                            type="button"
-                            onClick={() => customFileRef.current?.click()}
-                            disabled={uploadingCustom}
-                            className="text-[10px] font-black uppercase tracking-widest text-zinc-500 underline hover:text-black"
-                          >
-                            Replace
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCustomImageUrl("")}
-                            className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => customFileRef.current?.click()}
-                        disabled={uploadingCustom}
-                        className="w-full border border-dashed border-zinc-300 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-colors hover:border-black hover:text-black disabled:opacity-50"
-                      >
-                        {uploadingCustom ? "Uploading…" : "+ Upload Image"}
-                      </button>
-                    )}
-                    {customError && (
-                      <p className="mt-2 text-[10px] font-semibold text-red-500">{customError}</p>
-                    )}
-                  </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => customFileRef.current?.click()}
+                          disabled={uploadingCustom}
+                          className="w-full border border-dashed border-zinc-300 py-4 text-[10px] font-black uppercase tracking-widest text-zinc-400 transition-colors hover:border-black hover:text-black disabled:opacity-50"
+                        >
+                          {uploadingCustom ? "Uploading…" : "+ Upload Image"}
+                        </button>
+                      )}
+                      {customError && (
+                        <p className="mt-2 text-[10px] font-semibold text-red-500">{customError}</p>
+                      )}
+                    </div>
+                  )}
 
                   <p className="mt-1 text-[10px] text-zinc-400">
                     Customization is final once your order is placed.

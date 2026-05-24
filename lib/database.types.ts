@@ -27,6 +27,9 @@ export type Database = {
           tag: string | null;
           customizable: boolean;
           customization_cost: number; // NGN, whole naira
+          allow_custom_name: boolean;
+          allow_custom_number: boolean;
+          allow_custom_image: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -44,6 +47,9 @@ export type Database = {
           tag?: string | null;
           customizable?: boolean;
           customization_cost?: number;
+          allow_custom_name?: boolean;
+          allow_custom_number?: boolean;
+          allow_custom_image?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +67,9 @@ export type Database = {
           tag?: string | null;
           customizable?: boolean;
           customization_cost?: number;
+          allow_custom_name?: boolean;
+          allow_custom_number?: boolean;
+          allow_custom_image?: boolean;
           updated_at?: string;
         };
         Relationships: [];
