@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 
 type Props = {
@@ -10,10 +10,37 @@ type Props = {
 
 export default function ProductGallery({ images, productName }: Props) {
   const [active, setActive] = useState(0);
+  const touchStartX = useRef(0);
+  const touchDeltaX = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const goTo = useCallback(
+    (i: number) => setActive(Math.max(0, Math.min(i, images.length - 1))),
+    [images.length]
+  );
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+    touchDeltaX.current = 0;
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    touchDeltaX.current = e.touches[0].clientX - touchStartX.current;
+  }
+
+  function handleTouchEnd() {
+    const threshold = 50;
+    if (touchDeltaX.current < -threshold) {
+      goTo(active + 1); // swipe left → next
+    } else if (touchDeltaX.current > threshold) {
+      goTo(active - 1); // swipe right → prev
+    }
+    touchDeltaX.current = 0;
+  }
 
   return (
     <div className="flex gap-3">
-      {/* Thumbnail strip */}
+      {/* Thumbnail strip — desktop only */}
       {images.length > 1 && (
         <div className="hidden flex-col gap-2 sm:flex">
           {images.map((src, i) => (
@@ -36,8 +63,14 @@ export default function ProductGallery({ images, productName }: Props) {
         </div>
       )}
 
-      {/* Main image */}
-      <div className="relative flex-1 aspect-[3/4] overflow-hidden bg-zinc-100">
+      {/* Main image — swipeable on mobile */}
+      <div
+        ref={containerRef}
+        className="relative flex-1 aspect-[3/4] overflow-hidden bg-zinc-100 touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <Image
           src={images[active]}
           alt={`${productName} — view ${active + 1}`}
@@ -54,8 +87,8 @@ export default function ProductGallery({ images, productName }: Props) {
               <button
                 key={i}
                 onClick={() => setActive(i)}
-                className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                  i === active ? "bg-black" : "bg-zinc-400"
+                className={`h-2 w-2 rounded-full transition-all duration-300 ${
+                  i === active ? "bg-black scale-110" : "bg-zinc-400"
                 }`}
                 aria-label={`View ${i + 1}`}
               />
