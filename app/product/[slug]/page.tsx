@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import PDPClient from "./PDPClient";
 import ProductCard from "@/components/ProductCard";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://spaceworm.co";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.spaceworm.shop";
 
 type Props = {
   params: Promise<{ slug: string }>;

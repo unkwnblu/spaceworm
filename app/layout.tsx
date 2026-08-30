@@ -9,7 +9,7 @@ const inter = Inter({
   display: "swap",
 });
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://spaceworm.co";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.spaceworm.shop";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

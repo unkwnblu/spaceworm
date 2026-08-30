@@ -4,7 +4,7 @@ import Hero from "@/components/Hero";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import Footer from "@/components/Footer";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://spaceworm.co";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.spaceworm.shop";
 
 const organizationSchema = {
   "@context": "https://schema.org",

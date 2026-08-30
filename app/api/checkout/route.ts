@@ -53,7 +53,10 @@ export async function POST(request: Request) {
     }
 
     const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      (process.env.NODE_ENV === "production"
+        ? "https://www.spaceworm.shop"
+        : "http://localhost:3000");
 
     const paystackRes = await fetch(
       "https://api.paystack.co/transaction/initialize",
