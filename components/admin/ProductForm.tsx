@@ -37,6 +37,8 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
     (initialData?.colors as ProductColor[]) ?? []
   );
   const [images, setImages] = useState<string[]>(initialData?.images ?? []);
+  // New products start unpublished; existing ones keep whatever they have.
+  const [published, setPublished] = useState<boolean>(initialData?.published ?? false);
   const [customizable, setCustomizable] = useState<boolean>(initialData?.customizable ?? false);
   const [customizationCost, setCustomizationCost] = useState<string>(
     initialData?.customization_cost != null ? String(initialData.customization_cost) : ""
@@ -86,6 +88,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
       description: description.trim() || null,
       tag: tag || null,
       images,
+      published,
       customizable,
       customization_cost: customizable ? Math.round(parseFloat(customizationCost) || 0) : 0,
       allow_custom_name: allowName,
@@ -134,6 +137,7 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
     setDescription(initialData?.description ?? "");
     setColors((initialData?.colors as ProductColor[]) ?? []);
     setImages(initialData?.images ?? []);
+    setPublished(initialData?.published ?? false);
     setCustomizable(initialData?.customizable ?? false);
     setCustomizationCost(initialData?.customization_cost != null ? String(initialData.customization_cost) : "");
     setAllowName(initialData?.allow_custom_name ?? true);
@@ -254,6 +258,28 @@ export default function ProductForm({ initialData, mode = "edit", dangerZone }: 
                   onChange={(e) => { setDescription(e.target.value); markDirty(); }}
                 />
               </AdminFormField>
+
+              {/* Publish toggle */}
+              <div className="border border-zinc-200 bg-zinc-50 p-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={published}
+                    onChange={(e) => { setPublished(e.target.checked); markDirty(); }}
+                    className="mt-0.5 h-4 w-4 accent-black"
+                  />
+                  <div className="flex-1">
+                    <p className="text-xs font-black uppercase tracking-widest text-black">
+                      Published
+                    </p>
+                    <p className="mt-1 text-[11px] text-zinc-500">
+                      {published
+                        ? "Visible on the storefront, in search, and in its drop."
+                        : "Hidden everywhere on the storefront. Attaching it to a drop will not reveal it — publish it, or set its drop to Live."}
+                    </p>
+                  </div>
+                </label>
+              </div>
 
               {/* Customization toggle */}
               <div className="border border-zinc-200 bg-zinc-50 p-4">

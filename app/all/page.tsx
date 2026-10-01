@@ -14,6 +14,7 @@ export default async function AllPage() {
   const { data: products } = await supabase
     .from("products")
     .select("*")
+    .eq("published", true)
     .order("created_at", { ascending: false });
 
   return (

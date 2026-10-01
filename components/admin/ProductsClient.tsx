@@ -39,7 +39,7 @@ export default function ProductsClient({ products }: { products: DBProduct[] }) 
       </div>
 
       <AdminTable
-        columns={["#", "Name", "Category", "Gender", "Price", "Sizes", "Tag", ""]}
+        columns={["#", "Name", "Status", "Category", "Gender", "Price", "Sizes", "Tag", ""]}
         isEmpty={filtered.length === 0}
         emptyLabel="No products found"
       >
@@ -61,6 +61,19 @@ export default function ProductsClient({ products }: { products: DBProduct[] }) 
               <span className="block max-w-[180px] truncate text-xs font-bold text-black">
                 {p.name}
               </span>
+            </td>
+            <td className="px-4 py-3">
+              {p.published ? (
+                <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-black">
+                  <span className="h-1.5 w-1.5 rounded-full bg-black" />
+                  Live
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-zinc-300" />
+                  Hidden
+                </span>
+              )}
             </td>
             <td className="px-4 py-3 text-xs text-zinc-500">{p.category}</td>
             <td className="px-4 py-3 text-xs text-zinc-500">{p.gender}</td>

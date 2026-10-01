@@ -8,6 +8,7 @@ import AdminFormField from "@/components/admin/AdminFormField";
 import AdminSaveToast from "@/components/admin/AdminSaveToast";
 import { useUnsavedChanges } from "@/lib/useUnsavedChanges";
 import { uploadFile } from "@/lib/upload";
+import { toDateTimeInput, fromDateTimeInput } from "@/lib/datetime";
 
 type Props = {
   initialData?: DBDrop;
@@ -33,7 +34,7 @@ export default function DropForm({
 
   const [number, setNumber] = useState(initialData?.number ?? "");
   const [title, setTitle] = useState(initialData?.title ?? "");
-  const [date, setDate] = useState(initialData?.date ?? "");
+  const [date, setDate] = useState(toDateTimeInput(initialData?.date));
   const [status, setStatus] = useState(initialData?.status ?? "upcoming");
   const [description, setDescription] = useState(initialData?.description ?? "");
   const [imageUrl, setImageUrl] = useState(initialData?.image_url ?? "");
@@ -63,7 +64,7 @@ export default function DropForm({
     const errs: Record<string, string> = {};
     if (!number.trim()) errs.number = "Drop number is required";
     if (!title.trim()) errs.title = "Title is required";
-    if (!date) errs.date = "Date is required";
+    if (!date) errs.date = "Date and time are required";
     return errs;
   }
 
@@ -79,7 +80,7 @@ export default function DropForm({
     const payload = {
       number: number.trim(),
       title: title.trim(),
-      date,
+      date: fromDateTimeInput(date),
       status,
       description: description.trim() || null,
       image_url: imageUrl || null,
@@ -120,7 +121,7 @@ export default function DropForm({
   function handleDiscard() {
     setNumber(initialData?.number ?? "");
     setTitle(initialData?.title ?? "");
-    setDate(initialData?.date ?? "");
+    setDate(toDateTimeInput(initialData?.date));
     setStatus(initialData?.status ?? "upcoming");
     setDescription(initialData?.description ?? "");
     setImageUrl(initialData?.image_url ?? "");
@@ -168,9 +169,13 @@ export default function DropForm({
                 />
               </AdminFormField>
 
-              <AdminFormField label="Drop Date" error={errors.date}>
+              <AdminFormField
+                label="Drop Date & Time"
+                error={errors.date}
+                hint="Nigerian time (WAT). This is when the drop is announced as releasing."
+              >
                 <input
-                  type="date"
+                  type="datetime-local"
                   className={inputClass}
                   value={date}
                   onChange={(e) => { setDate(e.target.value); markDirty(); }}

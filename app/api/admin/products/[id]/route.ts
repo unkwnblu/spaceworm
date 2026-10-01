@@ -25,6 +25,7 @@ export async function PATCH(
       description: body.description || null,
       tag: body.tag || null,
       images: body.images ?? [],
+      published: !!body.published,
       customizable: !!body.customizable,
       customization_cost: Math.round(Number(body.customization_cost ?? 0)),
       allow_custom_name: body.allow_custom_name !== false,

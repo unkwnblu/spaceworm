@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { DBDrop } from "@/lib/database.types";
 import AdminTable from "@/components/admin/AdminTable";
 import AdminStatusBadge, { type Status } from "@/components/admin/AdminStatusBadge";
+import { formatDropDateTime } from "@/lib/datetime";
 
 type DropWithCount = DBDrop & { drop_products: { product_id: string }[] };
 
@@ -14,10 +15,6 @@ const FILTERS = [
   { label: "Live", value: "live" },
   { label: "Sold Out", value: "sold-out" },
 ] as const;
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-}
 
 export default function DropsClient({ drops }: { drops: DropWithCount[] }) {
   const [filter, setFilter] = useState<string>("all");
@@ -62,7 +59,7 @@ export default function DropsClient({ drops }: { drops: DropWithCount[] }) {
             <td className="px-4 py-4">
               <span className="text-xs font-bold text-black">{d.title}</span>
             </td>
-            <td className="px-4 py-4 text-xs text-zinc-500">{formatDate(d.date)}</td>
+            <td className="px-4 py-4 text-xs text-zinc-500">{formatDropDateTime(d.date)}</td>
             <td className="px-4 py-4">
               <AdminStatusBadge status={d.status as Status} />
             </td>

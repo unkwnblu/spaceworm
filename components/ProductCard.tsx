@@ -3,13 +3,24 @@ import Image from "next/image";
 import type { DBProduct } from "@/lib/database.types";
 import { formatNGN } from "@/lib/database.types";
 
+/** Only the fields a card renders — lets callers select narrowly. */
+export type CardProduct = Pick<
+  DBProduct,
+  "id" | "slug" | "name" | "price" | "images" | "category" | "tag"
+>;
+
 type Props = {
-  product: DBProduct;
+  product: CardProduct;
+  /**
+   * Teaser mode: the product is in a drop but not released yet. The card is
+   * not a link — its PDP is still gated and would 404.
+   */
+  comingSoon?: boolean;
 };
 
-export default function ProductCard({ product }: Props) {
-  return (
-    <Link href={`/product/${product.slug}`} className="group block">
+export default function ProductCard({ product, comingSoon = false }: Props) {
+  const body = (
+    <>
       {/* Image container */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-zinc-100">
         <Image
@@ -31,8 +42,12 @@ export default function ProductCard({ product }: Props) {
           />
         )}
 
-        {/* Tag badge */}
-        {product.tag && (
+        {/* Coming soon takes the badge slot — it outranks any product tag */}
+        {comingSoon ? (
+          <span className="absolute left-3 top-3 border border-black bg-white px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-black">
+            Coming Soon
+          </span>
+        ) : product.tag && (
           <span className="absolute left-3 top-3 bg-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
             {product.tag}
           </span>
@@ -49,8 +64,20 @@ export default function ProductCard({ product }: Props) {
             {product.name}
           </h3>
         </div>
-        <p className="shrink-0 text-sm font-black text-black">{formatNGN(product.price)}</p>
+        {/* Teasers show no price — it isn't on sale yet. */}
+        {!comingSoon && (
+          <p className="shrink-0 text-sm font-black text-black">{formatNGN(product.price)}</p>
+        )}
       </div>
+    </>
+  );
+
+  // A teaser has no PDP to link to — its product page is still gated.
+  if (comingSoon) return <div className="group block cursor-default">{body}</div>;
+
+  return (
+    <Link href={`/product/${product.slug}`} className="group block">
+      {body}
     </Link>
   );
 }

@@ -25,6 +25,7 @@ export type Database = {
           category: string;
           gender: string;
           tag: string | null;
+          published: boolean;
           customizable: boolean;
           customization_cost: number; // NGN, whole naira
           allow_custom_name: boolean;
@@ -45,6 +46,7 @@ export type Database = {
           category: string;
           gender: string;
           tag?: string | null;
+          published?: boolean;
           customizable?: boolean;
           customization_cost?: number;
           allow_custom_name?: boolean;
@@ -65,6 +67,7 @@ export type Database = {
           category?: string;
           gender?: string;
           tag?: string | null;
+          published?: boolean;
           customizable?: boolean;
           customization_cost?: number;
           allow_custom_name?: boolean;

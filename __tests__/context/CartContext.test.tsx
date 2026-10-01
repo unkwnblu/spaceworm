@@ -15,6 +15,7 @@ const mockProduct: DBProduct = {
   category: "T-Shirts",
   gender: "Unisex",
   tag: null,
+  published: true,
   customizable: false,
   customization_cost: 0,
   allow_custom_name: true,

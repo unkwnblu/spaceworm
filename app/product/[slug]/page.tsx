@@ -19,6 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .from("products")
     .select("name, description, images, price, category")
     .eq("slug", slug)
+    .eq("published", true)
     .single();
 
   if (!product) return { title: "Not Found" };
@@ -58,6 +59,7 @@ export default async function ProductPage({ params }: Props) {
     .from("products")
     .select("*")
     .eq("slug", slug)
+    .eq("published", true)
     .single();
 
   if (!product) notFound();
@@ -66,6 +68,7 @@ export default async function ProductPage({ params }: Props) {
     .from("products")
     .select("*")
     .eq("category", product.category)
+    .eq("published", true)
     .neq("id", product.id)
     .limit(4);
 

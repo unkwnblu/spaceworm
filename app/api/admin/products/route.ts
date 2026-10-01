@@ -41,6 +41,9 @@ export async function POST(request: Request) {
       description: body.description || null,
       tag: body.tag || null,
       images: body.images ?? [],
+      // Default to unpublished so a new product attached to an upcoming drop
+      // cannot appear on the storefront before the drop goes live.
+      published: !!body.published,
       customizable: !!body.customizable,
       customization_cost: Math.round(Number(body.customization_cost ?? 0)),
       allow_custom_name: body.allow_custom_name !== false,
