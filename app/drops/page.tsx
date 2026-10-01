@@ -8,6 +8,13 @@ import { formatDropDateTime } from "@/lib/datetime";
 import ProductCard from "@/components/ProductCard";
 import NotifyForm from "@/components/NotifyForm";
 
+/**
+ * Rendered per request. The service-role client reads no cookies, so without
+ * this Next prerenders the page at build time and a drop going live (or a
+ * product publishing) would not appear until the next deploy.
+ */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Drops",
   description: "Limited releases and new arrivals. When they're gone, they're gone.",
